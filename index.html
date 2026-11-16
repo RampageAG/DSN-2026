@@ -503,6 +503,15 @@
       max-height: 650px;
       overflow-y: auto;
     }
+	
+	.cal-events-overlay {
+      position: absolute;
+      top: 0;
+      left: 75px;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
 
     .cal-hour-row {
       display: flex;
@@ -525,7 +534,8 @@
       position: relative;
     }
 
-.cal-event-block {
+	.cal-event-block {
+	  pointer-events: auto;
       position: absolute;
       background: var(--accent-soft);
       border-left: 4px solid var(--accent);
@@ -2810,6 +2820,11 @@ function render() {
         if (!targetGrid) return;
 
         const hoursContainer = targetGrid.querySelector(".cal-hours-container");
+        
+        // Create the overlay offset by 75px so 0% starts cleanly after the time labels
+        const eventsOverlay = document.createElement("div");
+        eventsOverlay.className = "cal-events-overlay";
+        hoursContainer.appendChild(eventsOverlay);
 
         // Map events with computed minutes
         const mappedEvents = dayEvents.map(ev => ({
