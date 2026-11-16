@@ -600,6 +600,93 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+	
+	/* Event Detail Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 18px;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-back-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .modal-back-btn:hover {
+      background: var(--surface-hover);
+    }
+
+    .modal-body {
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      padding: 14px 18px;
+      background: var(--surface-alt);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Make event titles look interactive */
+    .clickable-title {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .clickable-title:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -642,6 +729,17 @@
   </div>
   <div id="eventsContainer"></div>
 </main>
+
+<div class="modal-backdrop" id="eventModal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <button class="modal-back-btn" id="modalCloseBtn">← Return to Schedule</button>
+      <span class="time-badge" id="modalTimeBadge" style="margin: 0;"></span>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
@@ -2750,6 +2848,74 @@
       .replace(/"/g, "&quot;");
   }
 
+  const eventModal = document.getElementById("eventModal");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+  function closeEventModal() {
+    eventModal.classList.remove("open");
+  }
+
+  modalCloseBtn.addEventListener("click", closeEventModal);
+  eventModal.addEventListener("click", (e) => {
+    if (e.target === eventModal) closeEventModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && eventModal.classList.contains("open")) {
+      closeEventModal();
+    }
+  });
+
+  function openEventModal(eventId) {
+    const ev = EVENTS.find(e => e.id === eventId);
+    if (!ev) return;
+
+    const isSaved = savedIds.has(ev.id);
+    const tagsList = (ev.Tags || "").split(",").map(t => t.trim()).filter(Boolean);
+
+    document.getElementById("modalTimeBadge").textContent = `${ev["Start Time"]} – ${ev["End Time"]}`;
+
+    document.getElementById("modalBody").innerHTML = `
+      <h2 id="modalTitle" style="margin: 0; font-size: 1.25rem; line-height: 1.3;">${escapeHtml(ev.Name)}</h2>
+      <div class="meta-row" style="margin-top: 0;">
+        <span class="meta-item">🗓 ${DAY_LABELS[ev.Day]}</span>
+        ${ev.Location ? `<span class="meta-item">📍 ${escapeHtml(ev.Location)}</span>` : ""}
+      </div>
+      ${ev["Featured Guests"] ? `
+        <div class="guests-box" style="margin-top: 4px;">
+          <strong>Featured Guests:</strong> ${escapeHtml(ev["Featured Guests"])}
+        </div>
+      ` : ""}
+      ${ev.Description ? `
+        <div class="event-desc" style="margin-top: 4px;">${formatDescription(ev.Description)}</div>
+      ` : `<p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0;">No additional description provided.</p>`}
+      ${tagsList.length ? `
+        <div class="card-tags" style="margin-top: 6px;">
+          ${tagsList.map(t => `<span class="mini-tag">${escapeHtml(t)}</span>`).join("")}
+        </div>
+      ` : ""}
+    `;
+
+    const footer = document.getElementById("modalFooter");
+    footer.innerHTML = `
+      <button class="toggle-btn ${isSaved ? "saved" : ""}" id="modalToggleBtn">
+        ${isSaved ? "✕ Remove from Calendar" : "+ Add to Calendar"}
+      </button>
+    `;
+
+    document.getElementById("modalToggleBtn").onclick = () => {
+      if (savedIds.has(ev.id)) {
+        savedIds.delete(ev.id);
+      } else {
+        savedIds.add(ev.id);
+      }
+      saveToStorage();
+      render();
+      openEventModal(ev.id); // Refresh the modal button state immediately
+    };
+
+    eventModal.classList.add("open");
+  }
+
 function render() {
     const container = document.getElementById("eventsContainer");
     const q = state.search.toLowerCase().trim();
@@ -2871,14 +3037,19 @@ function render() {
             block.style.left = `calc(${leftPct}% + 4px)`;
             block.style.width = `calc(${colWidth}% - 8px)`;
 
-            block.innerHTML = `
+		  block.innerHTML = `
               <div class="cal-event-header-row">
                 <div class="cal-event-time">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</div>
                 <button class="cal-remove-btn" title="Remove from Calendar" data-remove-id="${ev.id}">✕</button>
               </div>
-              <h4 class="event-title">${escapeHtml(ev.Name)}</h4>
+              <h4 class="event-title clickable-title" data-open-id="${ev.id}">${escapeHtml(ev.Name)}</h4>
               ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
             `;
+
+            block.querySelector("[data-open-id]").onclick = (e) => {
+              e.stopPropagation();
+              openEventModal(ev.id);
+            };
 
             block.querySelector(".cal-remove-btn").onclick = (e) => {
               e.stopPropagation();
@@ -2957,7 +3128,7 @@ function render() {
             <div>
               <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
               <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
-                <h2 class="event-title" style="margin: 0;">${escapeHtml(ev.Name)}</h2>
+                <h2 class="event-title clickable-title" data-open-id="${ev.id}" style="margin: 0;">${escapeHtml(ev.Name)}</h2>
                 ${ev.Location ? `<span style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">${escapeHtml(ev.Location)}</span>` : ""}
               </div>
             </div>
@@ -3017,6 +3188,13 @@ function render() {
           state.expandedDesc.add(id);
         }
         render();
+      };
+    });
+
+	// Bind clickable titles to open event detail modal
+    container.querySelectorAll("[data-open-id]").forEach(el => {
+      el.onclick = () => {
+        openEventModal(el.getAttribute("data-open-id"));
       };
     });
   }
