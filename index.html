@@ -2865,6 +2865,15 @@
     }
   });
 
+  function formatDescription(desc) {
+    if (!desc) return "";
+    // Splits on literal /n (or standard newlines) and wraps each part in a <p> tag
+    return desc
+      .split(/\/n+|\r?\n+/)
+      .map(paragraph => paragraph.trim() ? `<p style="margin: 0 0 8px 0;">${escapeHtml(paragraph)}</p>` : "")
+      .join("");
+  }
+
   function openEventModal(eventId) {
     const ev = EVENTS.find(e => e.id === eventId);
     if (!ev) return;
