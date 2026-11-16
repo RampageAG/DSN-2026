@@ -536,11 +536,11 @@
 
 	.cal-event-block {
 	  pointer-events: auto;
-      position: flex;
+      position: absolute;
       background: var(--accent-soft);
       border-left: 4px solid var(--accent);
       border-radius: 6px;
-      padding: 1px 8px 1px 80px;
+      padding: 6px 8px;
       font-size: 0.78rem;
       overflow: hidden;
       cursor: pointer;
@@ -2894,7 +2894,7 @@ function render() {
               render();
             };
 
-            hoursContainer.appendChild(block);
+            eventsOverlay.appendChild(block);
           }
         });
       });
