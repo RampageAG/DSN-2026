@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- PWA / Mobile Home Screen App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Event Schedule">
+    <meta name="theme-color" content="#f8fafc">
+    <title>3-Day Event Schedule & Personal Itinerary (Dec 3–5, 2026)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Configuration for Custom Pastel Accents & Font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        pastelBlue: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        pastelGreen: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Utilities for Mobile App Feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+            color: #0f172a; /* Slate 900 */
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom, 80px);
+        }
+
+        /* Hide scrollbars on horizontal pill containers while maintaining scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Subtle card transition */
+        .event-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .event-card:active {
+            transform: scale(0.992);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-pastelBlue-100 selection:text-pastelBlue-900">
+
+    <!-- =====================================================================
+         TOP STICKY HEADER & STRICT 3-DAY NAVIGATION
+    ====================================================================== -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        <div class="max-w-3xl mx-auto px-4 pt-3 pb-2.5">
+            <!-- Top Title & Data Import Trigger -->
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-pastelBlue-700 bg-pastelBlue-50 border border-pastelBlue-200/70 px-2 py-0.5 rounded-full mb-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-pastelBlue-600"></span>
+                        Dec 3 – Dec 5, 2026
+                    </span>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight" id="app-title">
+                        Event Schedule & Itinerary
+                    </h1>
+                </div>
+
+                <!-- Import Datasheet Button -->
+                <button 
+                    onclick="openImportModal()" 
+                    class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-3 py-2 rounded-xl transition-colors"
+                    title="Import your CSV or JSON datasheet"
+                >
+                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span>Import Data</span>
+                </button>
+            </div>
+
+            <!-- Strict 3-Day Segmented Tab Bar (Locked to Thu Dec 3, Fri Dec 4, Sat Dec 5) -->
+            <nav aria-label="Event Days" class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
+                <button 
+                    data-day="2026-12-03" 
+                    onclick="selectDay('2026-12-03')"
+                    class="day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-semibold bg-white text-pastelBlue-700 shadow-xs border border-pastelBlue-200/60"
+                >
+                    <span class="block text-[10px] uppercase tracking-wide opacity-75">Thu</span>
+                    <span>Dec 3</span>
+                </button>
+                <button 
+                    data-day="2026-12-04" 
+                    onclick="selectDay('2026-12-04')"
+                    class="day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900"
+                >
+                    <span class="block text-[10px] uppercase tracking-wide opacity-75">Fri</span>
+                    <span>Dec 4</span>
+                </button>
+                <button 
+                    data-day="2026-12-05" 
+                    onclick="selectDay('2026-12-05')"
+                    class="day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900"
+                >
+                    <span class="block text-[10px] uppercase tracking-wide opacity-75">Sat</span>
+                    <span>Dec 5</span>
+                </button>
+                <button 
+                    data-day="ALL" 
+                    onclick="selectDay('ALL')"
+                    class="day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900"
+                >
+                    <span class="block text-[10px] uppercase tracking-wide opacity-75">Full</span>
+                    <span>All 3 Days</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         MAIN CONTENT AREA
+    ====================================================================== -->
+    <main class="max-w-3xl mx-auto px-4 pt-4 pb-24">
+
+        <!-- Search & Tag Filter Section -->
+        <section class="mb-4 space-y-2.5" aria-label="Search and Filters">
+            <!-- Search Bar -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    oninput="handleSearch(this.value)"
+                    placeholder="Search events, guests, locations, or topics..." 
+                    class="block w-full pl-10 pr-9 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pastelBlue-200 focus:border-pastelBlue-600 transition-all shadow-2xs"
+                >
+                <button 
+                    id="clear-search-btn" 
+                    onclick="clearSearch()" 
+                    class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                    aria-label="Clear search"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Horizontal Scrollable Tag Filter Pills -->
+            <div id="tag-filters-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <!-- Tag pills dynamically injected here -->
+            </div>
+        </section>
+
+        <!-- My Schedule Action Banner (Shown only when in "My Schedule" mode) -->
+        <section id="my-schedule-controls" class="hidden mb-4 bg-pastelGreen-50/70 border border-pastelGreen-200/80 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-semibold text-pastelGreen-900 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-pastelGreen-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Your Personal Itinerary</span>
+                </h2>
+                <p class="text-xs text-pastelGreen-700 mt-0.5" id="schedule-summary-text">
+                    Saved automatically to this device.
+                </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button 
+                    onclick="exportToICS()" 
+                    id="export-ics-btn"
+                    class="inline-flex items-center gap-1.5 bg-pastelGreen-600 hover:bg-pastelGreen-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs transition-colors"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span>Export .ics</span>
+                </button>
+                <button 
+                    onclick="promptClearSchedule()" 
+                    id="clear-schedule-btn"
+                    class="inline-flex items-center gap-1 bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 text-xs font-medium px-3 py-2 rounded-xl transition-colors"
+                >
+                    <span>Clear</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Status / Results Header -->
+        <div class="flex items-center justify-between mb-3 px-0.5">
+            <p class="text-xs font-medium text-slate-500" id="results-count-label">
+                Showing events
+            </p>
+            <span id="conflict-summary-pill" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/90 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span id="conflict-count-text">Time Overlap</span>
+            </span>
+        </div>
+
+        <!-- Event Cards Feed -->
+        <div id="events-list" class="space-y-3">
+            <!-- Event cards dynamically rendered here -->
+        </div>
+
+        <!-- Empty State (Shown when no events match or My Schedule is empty) -->
+        <div id="empty-state" class="hidden text-center py-12 px-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 mb-1" id="empty-state-title">No events found</h3>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto mb-4" id="empty-state-desc">
+                Try adjusting your search or day filter to see more sessions.
+            </p>
+            <button 
+                id="empty-state-action" 
+                onclick="switchMode('browse')" 
+                class="inline-flex items-center gap-1.5 bg-pastelBlue-600 hover:bg-pastelBlue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            >
+                Browse All Events
+            </button>
+        </div>
+
+    </main>
+
+    <!-- =====================================================================
+         BOTTOM FIXED SEGMENTED NAVIGATION BAR ("Browse Events" vs "My Schedule")
+    ====================================================================== -->
+    <footer class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 pb-[env(safe-area-inset-bottom)]">
+        <div class="max-w-3xl mx-auto px-4 py-2">
+            <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200/70">
+                <button 
+                    id="nav-browse-btn" 
+                    onclick="switchMode('browse')"
+                    class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-white text-pastelBlue-700 shadow-xs border border-pastelBlue-200/60"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    <span>Browse Events</span>
+                </button>
+
+                <button 
+                    id="nav-schedule-btn" 
+                    onclick="switchMode('schedule')"
+                    class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    <span>My Schedule</span>
+                    <span 
+                        id="saved-count-badge" 
+                        class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-pastelGreen-100 text-pastelGreen-800 border border-pastelGreen-200"
+                    >
+                        0
+                    </span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         CUSTOM TOAST NOTIFICATION (Replaces browser alert)
+    ====================================================================== -->
+    <div id="toast-notification" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-200 transform -translate-y-2">
+        <div class="bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2">
+            <span id="toast-icon" class="w-2 h-2 rounded-full bg-pastelGreen-400"></span>
+            <span id="toast-message">Action completed</span>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         CONFIRMATION MODAL (Replaces browser confirm for Clear Schedule)
+    ====================================================================== -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl border border-slate-200">
+            <h3 class="text-base font-bold text-slate-900 mb-1.5">Clear Personal Schedule?</h3>
+            <p class="text-xs text-slate-600 mb-5 leading-relaxed">
+                This will remove all saved events from your personal itinerary on this device. You can re-add them anytime.
+            </p>
+            <div class="flex items-center justify-end gap-2">
+                <button 
+                    onclick="closeConfirmModal()" 
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onclick="confirmClearSchedule()" 
+                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+                >
+                    Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         DATA IMPORT MODAL (Paste CSV / JSON matching your exact columns)
+    ====================================================================== -->
+    <div id="import-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Import Event Datasheet</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Supports CSV or JSON with your exact columns
+                    </p>
+                </div>
+                <button onclick="closeImportModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="py-3 space-y-3 overflow-y-auto">
+                <div class="bg-pastelBlue-50/70 border border-pastelBlue-200/70 rounded-xl p-3 text-[11px] text-slate-700 space-y-1">
+                    <p class="font-semibold text-pastelBlue-900">Expected Datasheet Columns:</p>
+                    <p class="font-mono text-[10px] bg-white px-2 py-1 rounded border border-pastelBlue-100 text-slate-800">
+                        Name, Day, Start Time, End Time, Featured Guests, Location, Description, Tags
+                    </p>
+                    <p class="text-slate-600 pt-0.5">
+                        <strong>Day</strong> accepts <code class="bg-white px-1 rounded">2026-12-03</code>, <code class="bg-white px-1 rounded">12/3/2026</code>, or <code class="bg-white px-1 rounded">Thursday</code> (auto-mapped to Dec 3–5, 2026).
+                    </p>
+                </div>
+
+                <!-- File Upload Option -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Upload .csv or .json file</label>
+                    <input 
+                        type="file" 
+                        id="file-upload-input" 
+                        accept=".csv,.json,.txt" 
+                        onchange="handleFileUpload(event)"
+                        class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                    >
+                </div>
+
+                <!-- Paste Area -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Or paste CSV / JSON rows directly</label>
+                    <textarea 
+                        id="import-textarea" 
+                        rows="6" 
+                        placeholder='Name,Day,Start Time,End Time,Featured Guests,Location,Description,Tags&#10;"Opening Keynote","12/3/2026","10:00 AM","11:30 AM","Jane Doe, John Smith","Main Hall","Kickoff session for the 3-day event.","Keynote, Main Stage"'
+                        class="w-full p-3 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pastelBlue-200 focus:border-pastelBlue-600"
+                    ></textarea>
+                </div>
+                <p id="import-error-msg" class="hidden text-xs text-red-600 font-medium"></p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <button 
+                    onclick="resetToSampleData()" 
+                    class="text-xs font-medium text-slate-500 hover:text-slate-800 underline"
+                >
+                    Reset to Sample Data
+                </button>
+                <div class="flex items-center gap-2">
+                    <button 
+                        onclick="closeImportModal()" 
+                        class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="processImportedData()" 
+                        class="px-4 py-2 rounded-xl text-xs font-semibold bg-pastelBlue-600 hover:bg-pastelBlue-700 text-white shadow-xs"
+                    >
+                        Load Events
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         APPLICATION LOGIC & CUSTOMIZABLE EVENTS_DATA ARRAY
+    ====================================================================== -->
+    <script>
+        /**
+         * =====================================================================
+         * CUSTOMIZABLE EVENTS_DATA ARRAY
+         * Replace or edit these objects directly with your event rows.
+         * Schema matches your exact columns:
+         * - id: Unique identifier string
+         * - Name: Event title
+         * - Day: "2026-12-03" (Thu), "2026-12-04" (Fri), or "2026-12-05" (Sat)
+         * - Start Time: e.g., "10:00 AM" or "14:30"
+         * - End Time: e.g., "11:30 AM" or "16:00"
+         * - Featured Guests: Comma-separated string or array of names
+         * - Location: Room, hall, or stage name
+         * - Description: Full details about the session
+         * - Tags: Comma-separated string or array of category tags
+         * =====================================================================
+         */
+        const DEFAULT_EVENTS_DATA = [
+            // --- THURSDAY, DECEMBER 3, 2026 ---
+            {
+                id: "evt-thu-1",
+                Name: "Doors Open & Badge Pickup",
+                Day: "2026-12-03",
+                "Start Time": "9:00 AM",
+                "End Time": "10:30 AM",
+                "Featured Guests": "Event Concierge Team",
+                Location: "Grand Atrium Lobby",
+                Description: "Pick up your weekend pass, welcome tote, and printed lanyard map before the opening ceremonies kick off.",
+                Tags: "Registration, General"
+            },
+            {
+                id: "evt-thu-2",
+                Name: "Opening Keynote: Building the Next Decade",
+                Day: "2026-12-03",
+                "Start Time": "10:30 AM",
+                "End Time": "12:00 PM",
+                "Featured Guests": "Elena Vance, Marcus Thorne",
+                Location: "Main Stage Auditorium",
+                Description: "An inspiring kickoff exploring creative worldbuilding, independent production, and community-driven storytelling across all three days.",
+                Tags: "Keynote, Main Stage"
+            },
+            {
+                id: "evt-thu-3",
+                Name: "Indie Creators Roundtable",
+                Day: "2026-12-03",
+                "Start Time": "1:30 PM",
+                "End Time": "2:45 PM",
+                "Featured Guests": "Sora Takahashi, Devon Brooks, Priya Patel",
+                Location: "Panel Room B",
+                Description: "Independent directors and designers share candid lessons on funding, distribution, and staying creative under tight deadlines.",
+                Tags: "Panel, Creators"
+            },
+            {
+                id: "evt-thu-4",
+                Name: "Hands-On Sound Design Workshop",
+                Day: "2026-12-03",
+                "Start Time": "2:00 PM",
+                "End Time": "3:30 PM",
+                "Featured Guests": "Lucas Meyer",
+                Location: "Workshop Lab 104",
+                Description: "Learn foley recording techniques and spatial audio layering in this interactive live demonstration. Overlaps with the Indie Creators Roundtable to test conflict detection!",
+                Tags: "Workshop, Audio"
+            },
+            {
+                id: "evt-thu-5",
+                Name: "Thursday Night Welcome Mixer",
+                Day: "2026-12-03",
+                "Start Time": "7:00 PM",
+                "End Time": "9:30 PM",
+                "Featured Guests": "DJ Kairo",
+                Location: "Skyline Terrace",
+                Description: "Unwind after day one with light refreshments, ambient synth sets, and casual networking with fellow attendees and speakers.",
+                Tags: "Social, After Hours"
+            },
+
+            // --- FRIDAY, DECEMBER 4, 2026 ---
+            {
+                id: "evt-fri-1",
+                Name: "Morning Coffee & Portfolio Reviews",
+                Day: "2026-12-04",
+                "Start Time": "9:30 AM",
+                "End Time": "11:00 AM",
+                "Featured Guests": "Hannah Lin, Mateo Silva",
+                Location: "Artist Alley Lounge",
+                Description: "Bring your sketchbook, reel, or prototype for 15-minute one-on-one feedback sessions with veteran art directors.",
+                Tags: "Workshop, Creators"
+            },
+            {
+                id: "evt-fri-2",
+                Name: "The Art of Visual Storytelling",
+                Day: "2026-12-04",
+                "Start Time": "11:30 AM",
+                "End Time": "1:00 PM",
+                "Featured Guests": "Claire Dubois, Kenji Sato",
+                Location: "Main Stage Auditorium",
+                Description: "A deep dive into color theory, lighting, and pacing in modern animation and interactive media.",
+                Tags: "Main Stage, Art & Design"
+            },
+            {
+                id: "evt-fri-3",
+                Name: "Live Tabletop Adventure & Audience Play",
+                Day: "2026-12-04",
+                "Start Time": "2:30 PM",
+                "End Time": "4:30 PM",
+                "Featured Guests": "Samira Haddad, Toby Wright, Nina Alvarez",
+                Location: "Panel Room A",
+                Description: "Watch a chaotic, unscripted one-shot campaign where the audience votes on twists and dice modifiers in real time.",
+                Tags: "Live Show, Gaming"
+            },
+            {
+                id: "evt-fri-4",
+                Name: "Community Showcase & Short Film Screening",
+                Day: "2026-12-04",
+                "Start Time": "5:30 PM",
+                "End Time": "7:00 PM",
+                "Featured Guests": "Festival Jury",
+                Location: "Screening Theater",
+                Description: "Fifteen curated short films submitted by attendees, followed by a Q&A with the filmmakers.",
+                Tags: "Screening, Creators"
+            },
+
+            // --- SATURDAY, DECEMBER 5, 2026 ---
+            {
+                id: "evt-sat-1",
+                Name: "Collector's Market & Artist Alley Early Access",
+                Day: "2026-12-05",
+                "Start Time": "10:00 AM",
+                "End Time": "12:00 PM",
+                "Featured Guests": "80+ Featured Exhibitors",
+                Location: "Exhibition Hall C",
+                Description: "Browse exclusive prints, zines, handmade crafts, and limited-edition merchandise from over eighty independent artists.",
+                Tags: "Exhibition, Art & Design"
+            },
+            {
+                id: "evt-sat-2",
+                Name: "Behind the Scenes: Scoring Epic Worlds",
+                Day: "2026-12-05",
+                "Start Time": "1:00 PM",
+                "End Time": "2:15 PM",
+                "Featured Guests": "Julian Mercer",
+                Location: "Main Stage Auditorium",
+                Description: "Composer Julian Mercer breaks down multi-track orchestral stems and live cello loops from his latest score.",
+                Tags: "Main Stage, Audio"
+            },
+            {
+                id: "evt-sat-3",
+                Name: "Cosplay & Prop Craftsmanship Contest",
+                Day: "2026-12-05",
+                "Start Time": "4:00 PM",
+                "End Time": "6:00 PM",
+                "Featured Guests": "Rina Takahashi, Cole Vance",
+                Location: "Main Stage Auditorium",
+                Description: "Our signature Saturday showcase celebrating foam-smithing, tailoring, LED electronics, and stage performance.",
+                Tags: "Main Stage, Live Show"
+            },
+            {
+                id: "evt-sat-4",
+                Name: "Closing Ceremonies & Farewell Concert",
+                Day: "2026-12-05",
+                "Start Time": "8:00 PM",
+                "End Time": "10:00 PM",
+                "Featured Guests": "The Starlight Ensemble",
+                Location: "Main Stage Auditorium",
+                Description: "Celebrate an unforgettable three days with a live orchestral medley and announcements for next year's dates.",
+                Tags: "Keynote, Live Show, After Hours"
+            }
+        ];
+
+        // =====================================================================
+        // APPLICATION STATE
+        // =====================================================================
+        const STORAGE_KEYS = {
+            SAVED_IDS: 'event_itinerary_saved_ids_v1',
+            CUSTOM_EVENTS: 'event_itinerary_custom_data_v1'
+        };
+
+        const VALID_DAYS = [
+            { date: '2026-12-03', shortLabel: 'Thu, Dec 3', fullLabel: 'Thursday, December 3' },
+            { date: '2026-12-04', shortLabel: 'Fri, Dec 4', fullLabel: 'Friday, December 4' },
+            { date: '2026-12-05', shortLabel: 'Sat, Dec 5', fullLabel: 'Saturday, December 5' }
+        ];
+
+        let state = {
+            events: [],
+            savedIds: new Set(),
+            mode: 'browse',          // 'browse' | 'schedule'
+            selectedDay: '2026-12-03', // '2026-12-03' | '2026-12-04' | '2026-12-05' | 'ALL'
+            searchQuery: '',
+            selectedTag: 'ALL',
+            expandedDescriptions: new Set()
+        };
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStateFromStorage();
+            renderTagFilters();
+            updateSavedBadge();
+            renderEvents();
+        });
+
+        function loadStateFromStorage() {
+            // Load custom imported events if available, otherwise use DEFAULT_EVENTS_DATA
+            try {
+                const storedEvents = localStorage.getItem(STORAGE_KEYS.CUSTOM_EVENTS);
+                if (storedEvents) {
+                    const parsed = JSON.parse(storedEvents);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        state.events = normalizeEventsList(parsed);
+                    } else {
+                        state.events = normalizeEventsList(DEFAULT_EVENTS_DATA);
+                    }
+                } else {
+                    state.events = normalizeEventsList(DEFAULT_EVENTS_DATA);
+                }
+            } catch (e) {
+                console.error('Error loading custom events:', e);
+                state.events = normalizeEventsList(DEFAULT_EVENTS_DATA);
+            }
+
+            // Load user's saved event IDs
+            try {
+                const storedIds = localStorage.getItem(STORAGE_KEYS.SAVED_IDS);
+                if (storedIds) {
+                    const idsArray = JSON.parse(storedIds);
+                    if (Array.isArray(idsArray)) {
+                        state.savedIds = new Set(idsArray);
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading saved IDs:', e);
+                state.savedIds = new Set();
+            }
+        }
+
+        function saveIdsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.SAVED_IDS, JSON.stringify([...state.savedIds]));
+            } catch (e) {
+                console.error('Could not save to localStorage:', e);
+            }
+            updateSavedBadge();
+        }
+
+        // =====================================================================
+        // DATA NORMALIZATION & TIME PARSING HELPERS
+        // =====================================================================
+        function normalizeDayString(rawDay) {
+            if (!rawDay) return '2026-12-03';
+            const str = String(rawDay).trim().toLowerCase();
+            if (str.includes('2026-12-03') || str.includes('12/3') || str.includes('12/03') || str.includes('thu')) {
+                return '2026-12-03';
+            }
+            if (str.includes('2026-12-04') || str.includes('12/4') || str.includes('12/04') || str.includes('fri')) {
+                return '2026-12-04';
+            }
+            if (str.includes('2026-12-05') || str.includes('12/5') || str.includes('12/05') || str.includes('sat')) {
+                return '2026-12-05';
+            }
+            return '2026-12-03'; // Default strictly to Day 1 if unrecognized
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const clean = String(timeStr).trim().toUpperCase();
+            const match = clean.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/);
+            if (!match) return 0;
+
+            let hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            const meridiem = match[3];
+
+            if (meridiem === 'PM' && hours < 12) hours += 12;
+            if (meridiem === 'AM' && hours === 12) hours = 0;
+
+            return hours * 60 + minutes;
+        }
+
+        function formatDisplayTime(timeStr) {
+            if (!timeStr) return '';
+            const clean = String(timeStr).trim();
+            // If already has AM/PM, standardize spacing
+            if (/am|pm/i.test(clean)) {
+                return clean.replace(/\s*(am|pm)/i, (_, m) => ' ' + m.toUpperCase());
+            }
+            // Convert 24h HH:MM to 12h h:mm AM/PM
+            const mins = parseTimeToMinutes(clean);
+            let h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+        }
+
+        function splitCommaList(val) {
+            if (!val) return [];
+            if (Array.isArray(val)) return val.map(v => String(v).trim()).filter(Boolean);
+            return String(val).split(',').map(s => s.trim()).filter(Boolean);
+        }
+
+        function normalizeEventsList(rawList) {
+            return rawList.map((item, idx) => {
+                const name = item.Name || item.name || 'Untitled Event';
+                const day = normalizeDayString(item.Day || item.day);
+                const startRaw = item['Start Time'] || item.startTime || '10:00 AM';
+                const endRaw = item['End Time'] || item.endTime || '11:00 AM';
+                const startMins = parseTimeToMinutes(startRaw);
+                const endMins = Math.max(startMins + 15, parseTimeToMinutes(endRaw));
+
+                return {
+                    id: item.id || `evt-${day}-${idx}-${name.slice(0, 10).replace(/\W+/g, '')}`,
+                    Name: name,
+                    Day: day,
+                    startTimeFormatted: formatDisplayTime(startRaw),
+                    endTimeFormatted: formatDisplayTime(endRaw),
+                    startMinutes: startMins,
+                    endMinutes: endMins,
+                    guestsList: splitCommaList(item['Featured Guests'] || item.featuredGuests),
+                    Location: item.Location || item.location || 'TBA',
+                    Description: item.Description || item.description || '',
+                    tagsList: splitCommaList(item.Tags || item.tags)
+                };
+            }).sort((a, b) => {
+                if (a.Day !== b.Day) return a.Day.localeCompare(b.Day);
+                return a.startMinutes - b.startMinutes;
+            });
+        }
+
+        // =====================================================================
+        // CONFLICT DETECTION FOR SAVED SCHEDULE
+        // =====================================================================
+        function getConflictingEventIds() {
+            const savedEvents = state.events.filter(e => state.savedIds.has(e.id));
+            const conflicts = new Set();
+
+            for (let i = 0; i < savedEvents.length; i++) {
+                for (let j = i + 1; j < savedEvents.length; j++) {
+                    const a = savedEvents[i];
+                    const b = savedEvents[j];
+                    if (a.Day === b.Day) {
+                        // Overlap condition: StartA < EndB && StartB < EndA
+                        if (a.startMinutes < b.endMinutes && b.startMinutes < a.endMinutes) {
+                            conflicts.add(a.id);
+                            conflicts.add(b.id);
+                        }
+                    }
+                }
+            }
+            return conflicts;
+        }
+
+        // =====================================================================
+        // NAVIGATION & FILTER HANDLERS
+        // =====================================================================
+        function switchMode(newMode) {
+            state.mode = newMode;
+
+            const browseBtn = document.getElementById('nav-browse-btn');
+            const scheduleBtn = document.getElementById('nav-schedule-btn');
+            const scheduleControls = document.getElementById('my-schedule-controls');
+
+            if (newMode === 'browse') {
+                browseBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-white text-pastelBlue-700 shadow-xs border border-pastelBlue-200/60';
+                scheduleBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900';
+                scheduleControls.classList.add('hidden');
+            } else {
+                scheduleBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-white text-pastelGreen-700 shadow-xs border border-pastelGreen-200/80';
+                browseBtn.className = 'flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900';
+                scheduleControls.classList.remove('hidden');
+            }
+
+            renderEvents();
+        }
+
+        function selectDay(dayCode) {
+            state.selectedDay = dayCode;
+
+            document.querySelectorAll('.day-tab').forEach(btn => {
+                const isSelected = btn.getAttribute('data-day') === dayCode;
+                if (isSelected) {
+                    btn.className = 'day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-semibold bg-white text-pastelBlue-700 shadow-xs border border-pastelBlue-200/60';
+                } else {
+                    btn.className = 'day-tab py-2 px-1.5 rounded-lg text-center transition-all text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900';
+                }
+            });
+
+            renderEvents();
+        }
+
+        function handleSearch(query) {
+            state.searchQuery = query.trim().toLowerCase();
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (state.searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderEvents();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            handleSearch('');
+            input.focus();
+        }
+
+        function selectTag(tag) {
+            state.selectedTag = tag;
+            renderTagFilters();
+            renderEvents();
+        }
+
+        function toggleSaveEvent(eventId) {
+            const eventObj = state.events.find(e => e.id === eventId);
+            if (!eventObj) return;
+
+            if (state.savedIds.has(eventId)) {
+                state.savedIds.delete(eventId);
+                showToast(`Removed "${eventObj.Name}"`, 'neutral');
+            } else {
+                state.savedIds.add(eventId);
+                showToast(`Added "${eventObj.Name}" to My Schedule`, 'success');
+            }
+
+            saveIdsToStorage();
+            renderEvents();
+        }
+
+        function toggleDescription(eventId) {
+            if (state.expandedDescriptions.has(eventId)) {
+                state.expandedDescriptions.delete(eventId);
+            } else {
+                state.expandedDescriptions.add(eventId);
+            }
+            renderEvents();
+        }
+
+        function updateSavedBadge() {
+            const badge = document.getElementById('saved-count-badge');
+            badge.textContent = state.savedIds.size;
+        }
+
+        // =====================================================================
+        // RENDERING TAG FILTERS & EVENT CARDS
+        // =====================================================================
+        function renderTagFilters() {
+            const container = document.getElementById('tag-filters-container');
+            const tagSet = new Set();
+            state.events.forEach(e => e.tagsList.forEach(t => tagSet.add(t)));
+            const tags = ['ALL', ...Array.from(tagSet).sort()];
+
+            container.innerHTML = tags.map(tag => {
+                const isActive = state.selectedTag === tag;
+                const label = tag === 'ALL' ? 'All Tags' : escapeHtml(tag);
+                const activeClasses = 'bg-pastelBlue-600 text-white border-pastelBlue-600 shadow-2xs';
+                const inactiveClasses = 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900';
+
+                return `
+                    <button 
+                        onclick="selectTag('${escapeAttr(tag)}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${isActive ? activeClasses : inactiveClasses}"
+                    >
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderEvents() {
+            const listContainer = document.getElementById('events-list');
+            const emptyState = document.getElementById('empty-state');
+            const resultsLabel = document.getElementById('results-count-label');
+            const conflictSummaryPill = document.getElementById('conflict-summary-pill');
+            const conflictCountText = document.getElementById('conflict-count-text');
+
+            const conflictingIds = getConflictingEventIds();
+
+            // Update global conflict pill in My Schedule mode
+            if (state.mode === 'schedule' && conflictingIds.size > 0) {
+                conflictSummaryPill.classList.remove('hidden');
+                conflictCountText.textContent = `${conflictingIds.size} overlapping events`;
+            } else {
+                conflictSummaryPill.classList.add('hidden');
+            }
+
+            // Update My Schedule export buttons visibility
+            const exportBtn = document.getElementById('export-ics-btn');
+            const clearBtn = document.getElementById('clear-schedule-btn');
+            const summaryText = document.getElementById('schedule-summary-text');
+            if (state.savedIds.size === 0) {
+                exportBtn.classList.add('opacity-50', 'pointer-events-none');
+                clearBtn.classList.add('opacity-50', 'pointer-events-none');
+                summaryText.textContent = 'No events selected yet.';
+            } else {
+                exportBtn.classList.remove('opacity-50', 'pointer-events-none');
+                clearBtn.classList.remove('opacity-50', 'pointer-events-none');
+                summaryText.textContent = `${state.savedIds.size} event${state.savedIds.size === 1 ? '' : 's'} saved on this device.`;
+            }
+
+            // Filter events
+            const filtered = state.events.filter(evt => {
+                // Mode filter
+                if (state.mode === 'schedule' && !state.savedIds.has(evt.id)) {
+                    return false;
+                }
+                // Day filter
+                if (state.selectedDay !== 'ALL' && evt.Day !== state.selectedDay) {
+                    return false;
+                }
+                // Tag filter
+                if (state.selectedTag !== 'ALL' && !evt.tagsList.includes(state.selectedTag)) {
+                    return false;
+                }
+                // Search filter
+                if (state.searchQuery) {
+                    const haystack = [
+                        evt.Name,
+                        evt.Location,
+                        evt.Description,
+                        evt.guestsList.join(' '),
+                        evt.tagsList.join(' ')
+                    ].join(' ').toLowerCase();
+                    if (!haystack.includes(state.searchQuery)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // Update count label
+            const dayName = state.selectedDay === 'ALL'
+                ? 'All 3 Days'
+                : (VALID_DAYS.find(d => d.date === state.selectedDay)?.shortLabel || '');
+            resultsLabel.textContent = `${filtered.length} session${filtered.length === 1 ? '' : 's'} • ${dayName}`;
+
+            // Handle empty state
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+
+                const emptyTitle = document.getElementById('empty-state-title');
+                const emptyDesc = document.getElementById('empty-state-desc');
+                const emptyAction = document.getElementById('empty-state-action');
+
+                if (state.mode === 'schedule' && state.savedIds.size === 0) {
+                    emptyTitle.textContent = 'Your schedule is empty';
+                    emptyDesc.textContent = 'Tap "+ Add to Schedule" on any session in Browse Events to build your personal 3-day itinerary.';
+                    emptyAction.classList.remove('hidden');
+                } else {
+                    emptyTitle.textContent = 'No matching sessions';
+                    emptyDesc.textContent = state.mode === 'schedule'
+                        ? `You have no saved events on ${dayName} matching your current filters.`
+                        : 'Try clearing your search box or switching to another day tab.';
+                    emptyAction.classList.toggle('hidden', state.mode === 'browse');
+                }
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Group by day when viewing "ALL" days
+            let htmlOutput = '';
+            let lastRenderedDay = null;
+
+            filtered.forEach(evt => {
+                if (state.selectedDay === 'ALL' && evt.Day !== lastRenderedDay) {
+                    lastRenderedDay = evt.Day;
+                    const dayObj = VALID_DAYS.find(d => d.date === evt.Day);
+                    htmlOutput += `
+                        <div class="pt-2 pb-1 flex items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-pastelBlue-800 bg-pastelBlue-100/80 px-2.5 py-1 rounded-lg">
+                                ${dayObj ? dayObj.fullLabel : evt.Day}
+                            </span>
+                            <div class="h-px bg-slate-200 flex-1"></div>
+                        </div>
+                    `;
+                }
+
+                const isSaved = state.savedIds.has(evt.id);
+                const hasConflict = isSaved && conflictingIds.has(evt.id);
+                const isExpanded = state.expandedDescriptions.has(evt.id);
+                const isLongDesc = evt.Description.length > 135;
+
+                // Card border & subtle tint if saved
+                const cardBorderClass = isSaved
+                    ? 'border-pastelGreen-200 bg-white ring-1 ring-pastelGreen-100'
+                    : 'border-slate-200/90 bg-white hover:border-slate-300';
+
+                // Action button styles
+                const actionBtnClass = isSaved
+                    ? 'bg-pastelGreen-100 hover:bg-pastelGreen-200/80 text-pastelGreen-900 border border-pastelGreen-200'
+                    : 'bg-pastelBlue-50 hover:bg-pastelBlue-100 text-pastelBlue-700 border border-pastelBlue-200/80';
+
+                const actionBtnContent = isSaved
+                    ? `<svg class="w-3.5 h-3.5 text-pastelGreen-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg><span>Added</span>`
+                    : `<svg class="w-3.5 h-3.5 text-pastelBlue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M12 4v16m8-8H4"></path></svg><span>Add to Schedule</span>`;
+
+                // Guests pills
+                const guestsHtml = evt.guestsList.length > 0
+                    ? `<div class="flex flex-wrap items-center gap-1.5 mt-2.5">
+                        <span class="text-[11px] font-medium text-slate-400">Featuring:</span>
+                        ${evt.guestsList.map(g => `
+                            <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                                <svg class="w-2.5 h-2.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                ${escapeHtml(g)}
+                            </span>
+                        `).join('')}
+                       </div>`
+                    : '';
+
+                // Tags pills
+                const tagsHtml = evt.tagsList.length > 0
+                    ? `<div class="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
+                        ${evt.tagsList.map(t => `
+                            <span class="text-[11px] font-medium text-pastelBlue-700 bg-pastelBlue-50/90 border border-pastelBlue-100 px-2 py-0.5 rounded-full">
+                                #${escapeHtml(t)}
+                            </span>
+                        `).join('')}
+                       </div>`
+                    : '';
+
+                // Conflict Warning Badge
+                const conflictBadgeHtml = hasConflict
+                    ? `<div class="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                        <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span>Schedule Conflict: Overlaps with another saved event</span>
+                       </div>`
+                    : '';
+
+                htmlOutput += `
+                    <article class="event-card rounded-2xl p-4 border shadow-2xs ${cardBorderClass}">
+                        <!-- Top Row: Time Range & Location Badge -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-800 bg-slate-100/90 px-2.5 py-1 rounded-lg">
+                                <svg class="w-3.5 h-3.5 text-pastelBlue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>${escapeHtml(evt.startTimeFormatted)} – ${escapeHtml(evt.endTimeFormatted)}</span>
+                            </div>
+
+                            <div class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span>${escapeHtml(evt.Location)}</span>
+                            </div>
+                        </div>
+
+                        <!-- Title & One-Tap Toggle Button -->
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="text-base font-bold text-slate-900 leading-snug">
+                                ${escapeHtml(evt.Name)}
+                            </h3>
+                            <button 
+                                onclick="toggleSaveEvent('${escapeAttr(evt.id)}')" 
+                                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${actionBtnClass}"
+                                aria-pressed="${isSaved}"
+                            >
+                                ${actionBtnContent}
+                            </button>
+                        </div>
+
+                        ${conflictBadgeHtml}
+
+                        <!-- Featured Guests -->
+                        ${guestsHtml}
+
+                        <!-- Description -->
+                        ${evt.Description ? `
+                            <div class="mt-2.5 text-xs text-slate-600 leading-relaxed">
+                                <p class="${!isExpanded && isLongDesc ? 'line-clamp-2' : ''}">
+                                    ${escapeHtml(evt.Description)}
+                                </p>
+                                ${isLongDesc ? `
+                                    <button 
+                                        onclick="toggleDescription('${escapeAttr(evt.id)}')" 
+                                        class="mt-1 text-[11px] font-semibold text-pastelBlue-600 hover:text-pastelBlue-700"
+                                    >
+                                        ${isExpanded ? 'Show less' : 'Read more'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+
+                        <!-- Tags -->
+                        ${tagsHtml}
+                    </article>
+                `;
+            });
+
+            listContainer.innerHTML = htmlOutput;
+        }
+
+        // =====================================================================
+        // .ICS CALENDAR EXPORT (Apple Calendar, Google Calendar, Outlook)
+        // =====================================================================
+        function exportToICS() {
+            const savedEvents = state.events.filter(e => state.savedIds.has(e.id));
+            if (savedEvents.length === 0) {
+                showToast('Add events to your schedule first', 'neutral');
+                return;
+            }
+
+            const formatICSDate = (dayStr, totalMinutes) => {
+                // dayStr is "YYYY-MM-DD"
+                const cleanDate = dayStr.replace(/-/g, '');
+                const hours = Math.floor(totalMinutes / 60);
+                const mins = totalMinutes % 60;
+                return `${cleanDate}T${String(hours).padStart(2, '0')}${String(mins).padStart(2, '0')}00`;
+            };
+
+            const escapeICS = (text) => {
+                return String(text || '')
+                    .replace(/\\/g, '\\\\')
+                    .replace(/;/g, '\\;')
+                    .replace(/,/g, '\\,')
+                    .replace(/\n/g, '\\n');
+            };
+
+            const lines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//3-Day Event Schedule//EN',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH'
+            ];
+
+            const nowStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+            savedEvents.forEach(evt => {
+                const dtStart = formatICSDate(evt.Day, evt.startMinutes);
+                const dtEnd = formatICSDate(evt.Day, evt.endMinutes);
+                const fullDesc = [
+                    evt.Description,
+                    evt.guestsList.length ? `Featured Guests: ${evt.guestsList.join(', ')}` : '',
+                    evt.tagsList.length ? `Tags: ${evt.tagsList.join(', ')}` : ''
+                ].filter(Boolean).join('\n\n');
+
+                lines.push(
+                    'BEGIN:VEVENT',
+                    `UID:${evt.id}@event-schedule-2026`,
+                    `DTSTAMP:${nowStamp}`,
+                    `DTSTART:${dtStart}`,
+                    `DTEND:${dtEnd}`,
+                    `SUMMARY:${escapeICS(evt.Name)}`,
+                    `LOCATION:${escapeICS(evt.Location)}`,
+                    `DESCRIPTION:${escapeICS(fullDesc)}`,
+                    'END:VEVENT'
+                );
+            });
+
+            lines.push('END:VCALENDAR');
+
+            const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'My_Event_Schedule_Dec3-5_2026.ics');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Downloaded .ics calendar file', 'success');
+        }
+
+        // =====================================================================
+        // CLEAR SCHEDULE MODAL HANDLERS
+        // =====================================================================
+        function promptClearSchedule() {
+            if (state.savedIds.size === 0) return;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function confirmClearSchedule() {
+            state.savedIds.clear();
+            saveIdsToStorage();
+            closeConfirmModal();
+            renderEvents();
+            showToast('Personal schedule cleared', 'neutral');
+        }
+
+        // =====================================================================
+        // CSV / JSON IMPORT MODAL & PARSER
+        // =====================================================================
+        function openImportModal() {
+            document.getElementById('import-error-msg').classList.add('hidden');
+            document.getElementById('import-modal').classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('import-textarea').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentVal = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (inQuotes) {
+                    if (char === '"' && nextChar === '"') {
+                        currentVal += '"';
+                        i++;
+                    } else if (char === '"') {
+                        inQuotes = false;
+                    } else {
+                        currentVal += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentVal.trim());
+                        currentVal = '';
+                    } else if (char === '\r' && nextChar === '\n') {
+                        currentRow.push(currentVal.trim());
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentVal = '';
+                        i++;
+                    } else if (char === '\n' || char === '\r') {
+                        currentRow.push(currentVal.trim());
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentVal = '';
+                    } else {
+                        currentVal += char;
+                    }
+                }
+            }
+            if (currentVal.length > 0 || currentRow.length > 0) {
+                currentRow.push(currentVal.trim());
+                rows.push(currentRow);
+            }
+
+            const nonEmptyRows = rows.filter(r => r.some(cell => cell.length > 0));
+            if (nonEmptyRows.length < 2) return [];
+
+            const headers = nonEmptyRows[0];
+            return nonEmptyRows.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = row[idx] || '';
+                });
+                return obj;
+            });
+        }
+
+        function processImportedData() {
+            const rawText = document.getElementById('import-textarea').value.trim();
+            const errorEl = document.getElementById('import-error-msg');
+            errorEl.classList.add('hidden');
+
+            if (!rawText) {
+                errorEl.textContent = 'Please paste CSV/JSON text or choose a file first.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                let parsedList = [];
+                if (rawText.startsWith('[') || rawText.startsWith('{')) {
+                    const json = JSON.parse(rawText);
+                    parsedList = Array.isArray(json) ? json : [json];
+                } else {
+                    parsedList = parseCSV(rawText);
+                }
+
+                if (!parsedList || parsedList.length === 0) {
+                    throw new Error('No valid rows found. Make sure your CSV includes a header row.');
+                }
+
+                const normalized = normalizeEventsList(parsedList);
+                state.events = normalized;
+                state.selectedTag = 'ALL';
+                localStorage.setItem(STORAGE_KEYS.CUSTOM_EVENTS, JSON.stringify(parsedList));
+
+                renderTagFilters();
+                renderEvents();
+                closeImportModal();
+                showToast(`Imported ${normalized.length} events`, 'success');
+            } catch (err) {
+                errorEl.textContent = `Import error: ${err.message}`;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function resetToSampleData() {
+            localStorage.removeItem(STORAGE_KEYS.CUSTOM_EVENTS);
+            state.events = normalizeEventsList(DEFAULT_EVENTS_DATA);
+            state.selectedTag = 'ALL';
+            document.getElementById('import-textarea').value = '';
+            renderTagFilters();
+            renderEvents();
+            closeImportModal();
+            showToast('Restored default sample schedule', 'neutral');
+        }
+
+        // =====================================================================
+        // TOAST & HTML ESCAPE UTILITIES
+        // =====================================================================
+        let toastTimeout = null;
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.textContent = message;
+            iconEl.className = type === 'success'
+                ? 'w-2 h-2 rounded-full bg-pastelGreen-400'
+                : 'w-2 h-2 rounded-full bg-pastelBlue-300';
+
+            toast.classList.remove('opacity-0', '-translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-2');
+            }, 2400);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function escapeAttr(str) {
+            return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
