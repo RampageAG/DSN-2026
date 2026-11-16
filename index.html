@@ -525,14 +525,12 @@
       position: relative;
     }
 
-    .cal-event-block {
+.cal-event-block {
       position: absolute;
-      left: 6px;
-      right: 6px;
       background: var(--accent-soft);
       border-left: 4px solid var(--accent);
       border-radius: 6px;
-      padding: 4px 8px;
+      padding: 6px 8px;
       font-size: 0.78rem;
       overflow: hidden;
       cursor: pointer;
@@ -542,6 +540,30 @@
 
     .cal-event-block:hover {
       background: rgba(56, 189, 248, 0.25);
+      z-index: 10;
+    }
+
+    .cal-event-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .cal-remove-btn {
+      background: none;
+      border: none;
+      color: var(--red);
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0 3px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .cal-remove-btn:hover {
+      background: var(--red-soft);
     }
 
     .cal-event-block .event-title {
@@ -2720,7 +2742,7 @@ function render() {
     const container = document.getElementById("eventsContainer");
     const q = state.search.toLowerCase().trim();
 
-    // If we are in "MY" calendar mode, render the Google Calendar-style daily time grid
+    // If we are in "MY" calendar mode, render the Google Calendar-style daily time grid with side-by-side collisions
     if (state.mode === "MY") {
       const savedEvents = EVENTS.filter(ev => savedIds.has(ev.id));
       document.getElementById("resultsCount").textContent =
@@ -2772,6 +2794,7 @@ function render() {
 
       container.innerHTML = html;
 
+      // Inject event blocks with overlap layout calculation & remove buttons
       days.forEach(dayKey => {
         const dayEvents = savedEvents.filter(e => e.Day === dayKey);
         if (dayEvents.length === 0) return;
@@ -2787,32 +2810,74 @@ function render() {
 
         const hoursContainer = targetGrid.querySelector(".cal-hours-container");
 
-        dayEvents.forEach(ev => {
-          const startMins = parseTimeToMinutes(ev["Start Time"]);
-          const endMins = parseTimeToMinutes(ev["End Time"]);
-          const durationMins = Math.max(30, endMins - startMins);
+        // Map events with computed minutes
+        const mappedEvents = dayEvents.map(ev => ({
+          ...ev,
+          startMins: parseTimeToMinutes(ev["Start Time"]),
+          endMins: parseTimeToMinutes(ev["End Time"])
+        }));
 
+        // Compute overlap columns (Interval coloring / packing algorithm)
+        const columns = [];
+        mappedEvents.forEach(ev => {
+          let placed = false;
+          for (let col of columns) {
+            let overlap = false;
+            for (let existing of col) {
+              if (ev.startMins < existing.endMins && ev.endMins > existing.startMins) {
+                overlap = true;
+                break;
+              }
+            }
+            if (!overlap) {
+              col.push(ev);
+              ev._col = columns.indexOf(col);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            columns.push([ev]);
+            ev._col = columns.length - 1;
+          }
+        });
+
+        const totalCols = Math.max(1, columns.length);
+
+        mappedEvents.forEach(ev => {
+          const durationMins = Math.max(30, ev.endMins - ev.startMins);
           const dayStartMins = 9 * 60;
-          const topPx = ((startMins - dayStartMins) / 60) * 60;
+          const topPx = ((ev.startMins - dayStartMins) / 60) * 60;
           const heightPx = (durationMins / 60) * 60;
+
+          const colWidth = 100 / totalCols;
+          const leftPct = ev._col * colWidth;
 
           if (topPx >= 0) {
             const block = document.createElement("div");
             block.className = "cal-event-block";
             block.style.top = `${topPx}px`;
             block.style.height = `${heightPx}px`;
+            block.style.left = `calc(${leftPct}% + 4px)`;
+            block.style.width = `calc(${colWidth}% - 8px)`;
+
             block.innerHTML = `
-              <div class="cal-event-time">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</div>
+              <div class="cal-event-header-row">
+                <div class="cal-event-time">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</div>
+                <button class="cal-remove-btn" title="Remove from Calendar" data-remove-id="${ev.id}">✕</button>
+              </div>
               <h4 class="event-title">${escapeHtml(ev.Name)}</h4>
               ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
             `;
-            block.onclick = () => {
-              if (confirm(`Remove "${ev.Name}" from your calendar?`)) {
-                savedIds.delete(ev.id);
-                saveToStorage();
-                render();
-              }
+
+            // Bind remove button specifically
+            block.querySelector(".cal-remove-btn").onclick = (e) => {
+              e.stopPropagation();
+              savedIds.delete(ev.id);
+              saveToStorage();
+              render();
             };
+
             hoursContainer.appendChild(block);
           }
         });
