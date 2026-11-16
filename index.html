@@ -498,19 +498,20 @@
       align-items: center;
     }
 
-    .cal-hours-container {
+.cal-hours-container {
       position: relative;
       max-height: 650px;
       overflow-y: auto;
     }
 	
-	.cal-events-overlay {
+    .cal-events-overlay {
       position: absolute;
       top: 0;
       left: 75px;
       right: 0;
       bottom: 0;
       pointer-events: none;
+      height: 100%;
     }
 
     .cal-hour-row {
@@ -2778,13 +2779,17 @@ function render() {
 
         dayEvents.sort((a, b) => parseTimeToMinutes(a["Start Time"]) - parseTimeToMinutes(b["Start Time"]));
 
+        const totalHours = 22 - 9 + 1; // 9 AM to 22 PM
+        const totalHeight = totalHours * 60; // 60px per hour
+
         html += `
-          <div class="cal-grid">
+          <div class="cal-grid" data-day="${dayKey}">
             <div class="cal-day-header">
               <span>${DAY_LABELS[dayKey]}</span>
               <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">${dayEvents.length} events</span>
             </div>
-            <div class="cal-hours-container">
+            <div class="cal-hours-container" style="height: ${totalHeight}px;">
+              <div class="cal-events-overlay"></div>
         `;
 
         const startHour = 9;
@@ -2805,26 +2810,15 @@ function render() {
 
       container.innerHTML = html;
 
-      // Inject event blocks with overlap layout calculation & remove buttons
+      // Inject event blocks into each day's overlay with overlap layout calculation
       days.forEach(dayKey => {
         const dayEvents = savedEvents.filter(e => e.Day === dayKey);
         if (dayEvents.length === 0) return;
 
-        const headers = container.querySelectorAll(".cal-day-header");
-        let targetGrid = null;
-        headers.forEach(hdr => {
-          if (hdr.textContent.includes(DAY_LABELS[dayKey].split(",")[0])) {
-            targetGrid = hdr.closest(".cal-grid");
-          }
-        });
+        const targetGrid = container.querySelector(`.cal-grid[data-day="${dayKey}"]`);
         if (!targetGrid) return;
 
-        const hoursContainer = targetGrid.querySelector(".cal-hours-container");
-        
-        // Create the overlay offset by 75px so 0% starts cleanly after the time labels
-        const eventsOverlay = document.createElement("div");
-        eventsOverlay.className = "cal-events-overlay";
-        hoursContainer.appendChild(eventsOverlay);
+        const eventsOverlay = targetGrid.querySelector(".cal-events-overlay");
 
         // Map events with computed minutes
         const mappedEvents = dayEvents.map(ev => ({
@@ -2833,7 +2827,7 @@ function render() {
           endMins: parseTimeToMinutes(ev["End Time"])
         }));
 
-        // Compute overlap columns (Interval coloring / packing algorithm)
+        // Compute overlap columns
         const columns = [];
         mappedEvents.forEach(ev => {
           let placed = false;
@@ -2866,7 +2860,6 @@ function render() {
           const topPx = ((ev.startMins - dayStartMins) / 60) * 60;
           const heightPx = (durationMins / 60) * 60;
 
-          // Simple percentage-based column sizing within the hour slot container
           const colWidth = 100 / totalCols;
           const leftPct = ev._col * colWidth;
 
