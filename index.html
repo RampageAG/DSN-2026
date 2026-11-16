@@ -2851,6 +2851,7 @@ function render() {
           const topPx = ((ev.startMins - dayStartMins) / 60) * 60;
           const heightPx = (durationMins / 60) * 60;
 
+          // Simple percentage-based column sizing within the hour slot container
           const colWidth = 100 / totalCols;
           const leftPct = ev._col * colWidth;
 
@@ -2859,8 +2860,8 @@ function render() {
             block.className = "cal-event-block";
             block.style.top = `${topPx}px`;
             block.style.height = `${heightPx}px`;
-			block.style.left = `calc(75px + (${leftPct}% * ((100% - 75px) / 100)) + 4px)`;
-            block.style.width = `calc((${100}% - 75px) * (${colWidth} / 100) - 8px)`;
+            block.style.left = `calc(${leftPct}% + 4px)`;
+            block.style.width = `calc(${colWidth}% - 8px)`;
 
             block.innerHTML = `
               <div class="cal-event-header-row">
@@ -2871,7 +2872,6 @@ function render() {
               ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
             `;
 
-            // Bind remove button specifically
             block.querySelector(".cal-remove-btn").onclick = (e) => {
               e.stopPropagation();
               savedIds.delete(ev.id);
