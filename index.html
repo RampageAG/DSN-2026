@@ -2776,13 +2776,12 @@
     }
 
     function escapeIcsText(str) {
-      return String(str || "")
-        .replace(/\/g, "\\")
-        .replace(/;/g, "\;")
-        .replace(/,/g, "\,")
-        .replace(/
-/g, "\n");
-    }
+    return String(str || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\n/g, "\\n");
+  }
 
     let lines = [
       "BEGIN:VCALENDAR",
