@@ -474,6 +474,98 @@
       background: var(--green-soft);
       color: var(--green);
     }
+	
+	/* Daily Calendar Time Grid Styles */
+    .cal-grid {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .cal-day-header {
+      padding: 12px 16px;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cal-hours-container {
+      position: relative;
+      max-height: 650px;
+      overflow-y: auto;
+    }
+
+    .cal-hour-row {
+      display: flex;
+      height: 60px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+    }
+
+    .cal-time-label {
+      width: 75px;
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: right;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .cal-hour-slot {
+      flex: 1;
+      position: relative;
+    }
+
+    .cal-event-block {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.15s;
+      z-index: 2;
+    }
+
+    .cal-event-block:hover {
+      background: rgba(56, 189, 248, 0.25);
+    }
+
+    .cal-event-block .event-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
+    }
+
+    .cal-event-block .cal-event-time {
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .cal-event-block .cal-event-loc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -621,7 +713,7 @@
     "Day": "2026-12-03",
     "Start Time": "11:00 AM",
     "End Time": "12:30 PM",
-    "Featured Guests": "Amanda Embry, Shawn Embry, David Smith",
+    "Featured Guests": "",
     "Location": "Game Room (Room 155)",
     "Description": "",
     "Tags": "Gaming"
@@ -631,7 +723,7 @@
     "Day": "2026-12-03",
     "Start Time": "11:00 AM",
     "End Time": "2:00 PM",
-    "Featured Guests": "",
+    "Featured Guests": "Amanda Embry, Shawn Embry, David Smith",
     "Location": "Sel - Craft Room (Room 255)",
     "Description": "MUST BE 21+ IN ORDER TO PARTICIPATE IN THIS WORKSHOP  Have you ever wanted to make actual mist come out of your mistcloak? Or have your shadplate emit steam? In this cosplay workshop you will learn how make a mini fog machine that can do just that.  Due to the components used in making the fog machine, all participates must be 21+ years of age.",
     "Tags": "Craft"
@@ -2624,48 +2716,125 @@
       .replace(/"/g, "&quot;");
   }
 
-  function render() {
+function render() {
     const container = document.getElementById("eventsContainer");
     const q = state.search.toLowerCase().trim();
-    const conflictIds = getConflicts();
 
-    let filtered = EVENTS.filter(ev => {
-      if (state.mode === "MY" && !savedIds.has(ev.id)) return false;
-      if (state.day !== "ALL" && ev.Day !== state.day) return false;
-      if (state.location !== "ALL" && ev.Location !== state.location) return false;
-      if (state.tag !== "ALL") {
-        const evTags = (ev.Tags || "").split(",").map(t => t.trim());
-        if (!evTags.includes(state.tag)) return false;
+    // If we are in "MY" calendar mode, render the Google Calendar-style daily time grid
+    if (state.mode === "MY") {
+      const savedEvents = EVENTS.filter(ev => savedIds.has(ev.id));
+      document.getElementById("resultsCount").textContent =
+        `${savedEvents.length} event${savedEvents.length === 1 ? "" : "s"} in your calendar`;
+
+      if (savedEvents.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No events in your calendar yet</h3>
+            <p>Switch to Browse Schedule and tap + Add to Calendar on any panel, workshop, or game session.</p>
+          </div>
+        `;
+        return;
       }
-      if (q) {
-        const hay = `${ev.Name} ${ev["Featured Guests"]} ${ev.Location} ${ev.Description} ${ev.Tags}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
 
-    // Sort by Day, then Start Time, then Name
-    filtered.sort((a, b) => {
-      if (a.Day !== b.Day) return a.Day.localeCompare(b.Day);
-      const tDiff = parseTimeToMinutes(a["Start Time"]) - parseTimeToMinutes(b["Start Time"]);
-      if (tDiff !== 0) return tDiff;
-      return a.Name.localeCompare(b.Name);
-    });
+      // Group saved events by day (2026-12-03, 2026-12-04, 2026-12-05)
+      const days = ["2026-12-03", "2026-12-04", "2026-12-05"];
+      let html = "";
 
-    document.getElementById("resultsCount").textContent =
-      `${filtered.length} event${filtered.length === 1 ? "" : "s"} shown`;
+      days.forEach(dayKey => {
+        const dayEvents = savedEvents.filter(e => e.Day === dayKey);
+        if (dayEvents.length === 0) return;
 
+        // Sort by start time
+        dayEvents.sort((a, b) => parseTimeToMinutes(a["Start Time"]) - parseTimeToMinutes(b["Start Time"]));
 
+        html += `
+          <div class="cal-grid">
+            <div class="cal-day-header">
+              <span>${DAY_LABELS[dayKey]}</span>
+              <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">${dayEvents.length} events</span>
+            </div>
+            <div class="cal-hours-container">
+        `;
 
-    if (filtered.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <h3>${state.mode === "MY" ? "No events in your calendar yet" : "No matching events found"}</h3>
-          <p>${state.mode === "MY"
-            ? "Switch to Browse Schedule and tap + Add to Calendar on any panel, workshop, or game session."
-            : "Try clearing your search or switching day/room filters."}</p>
-        </div>
-      `;
+        // Hours from 9 AM (540 mins) to 10 PM (1320 mins), 60px per hour = 1px per minute
+        const startHour = 9;
+        const endHour = 22;
+        const hourHeight = 60; // pixels per hour
+
+        for (let h = startHour; h <= endHour; h++) {
+          const displayHour = h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`;
+          html += `
+            <div class="cal-hour-row">
+              <div class="cal-time-label">${displayHour}</div>
+              <div class="cal-hour-slot" data-hour="${h}"></div>
+            </div>
+          `;
+        }
+
+        html += `</div></div>`;
+      });
+
+      container.innerHTML = html;
+
+      // Now inject event blocks into the corresponding hour slots with absolute positioning
+      days.forEach(dayKey => {
+        const dayEvents = savedEvents.filter(e => e.Day === dayKey);
+        if (dayEvents.length === 0) return;
+
+        const gridEl = container.querySelector(`.cal-grid:has(.cal-day-header)`); // or locate via container lookup
+        // Let's position accurately per day grid container:
+      });
+
+      // Cleaner approach to inject blocks post-render:
+      days.forEach(dayKey => {
+        const dayEvents = savedEvents.filter(e => e.Day === dayKey);
+        if (dayEvents.length === 0) return;
+
+        // Find the specific day container
+        const headers = container.querySelectorAll(".cal-day-header");
+        let targetGrid = null;
+        headers.forEach(hdr => {
+          if (hdr.textContent.includes(DAY_LABELS[dayKey].split(",")[0])) {
+            targetGrid = hdr.closest(".cal-grid");
+          }
+        });
+        if (!targetGrid) return;
+
+        const hoursContainer = targetGrid.querySelector(".cal-hours-container");
+
+        dayEvents.forEach(ev => {
+          const startMins = parseTimeToMinutes(ev["Start Time"]);
+          const endMins = parseTimeToMinutes(ev["End Time"]);
+          const durationMins = Math.max(30, endMins - startMins); // minimum 30m block height
+
+          // Grid starts at 9:00 AM (540 minutes)
+          const dayStartMins = 9 * 60;
+          const topPx = ((startMins - dayStartMins) / 60) * 60; // 60px per hour
+          const heightPx = (durationMins / 60) * 60;
+
+          if (topPx >= 0) {
+            const block = document.createElement("div");
+            block.className = "cal-event-block";
+            block.style.top = `${topPx}px`;
+            block.style.height = `${heightPx}px`;
+            block.innerHTML = `
+              <div class="cal-event-time">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</div>
+              <h4 class="event-title">${escapeHtml(ev.Name)}</h4>
+              ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
+            `;
+            // Click to remove or view details
+            block.onclick = () => {
+              if (confirm(`Remove "${ev.Name}" from your calendar?`)) {
+                savedIds.delete(ev.id);
+                saveToStorage();
+                render();
+              }
+            };
+            hoursContainer.appendChild(block);
+          }
+        });
+      });
+
       return;
     }
 
@@ -2690,18 +2859,17 @@
         const tagsList = (ev.Tags || "").split(",").map(t => t.trim()).filter(Boolean);
         const longDesc = ev.Description && ev.Description.length > 180;
 
-        html += `
+		html += `
           <article class="event-card ${isSaved ? "selected" : ""} ">
-            <div class="card-top">
-              <div>
-                <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
-                
-                <h2 class="event-title">${escapeHtml(ev.Name)}</h2>
+            <div>
+              <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
+                <h2 class="event-title" style="margin: 0;">${escapeHtml(ev.Name)}</h2>
+                ${ev.Location ? `<span style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">${escapeHtml(ev.Location)}</span>` : ""}
               </div>
             </div>
 
             <div class="meta-row">
-              ${ev.Location ? `<span class="meta-item">📍 ${escapeHtml(ev.Location)}</span>` : ""}
               ${state.day === "ALL" ? `<span class="meta-item">🗓 ${DAY_LABELS[ev.Day].split(",")[0]}</span>` : ""}
             </div>
 
@@ -2809,7 +2977,7 @@
 
     lines.push("END:VCALENDAR");
 
-	  const blob = new Blob([lines.join("\n")], { type: "text/calendar;charset=utf-8" });
+	const blob = new Blob([lines.join("\n")], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
