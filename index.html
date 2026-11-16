@@ -2736,7 +2736,6 @@ function render() {
         return;
       }
 
-      // Group saved events by day (2026-12-03, 2026-12-04, 2026-12-05)
       const days = ["2026-12-03", "2026-12-04", "2026-12-05"];
       let html = "";
 
@@ -2744,7 +2743,6 @@ function render() {
         const dayEvents = savedEvents.filter(e => e.Day === dayKey);
         if (dayEvents.length === 0) return;
 
-        // Sort by start time
         dayEvents.sort((a, b) => parseTimeToMinutes(a["Start Time"]) - parseTimeToMinutes(b["Start Time"]));
 
         html += `
@@ -2756,10 +2754,8 @@ function render() {
             <div class="cal-hours-container">
         `;
 
-        // Hours from 9 AM (540 mins) to 10 PM (1320 mins), 60px per hour = 1px per minute
         const startHour = 9;
         const endHour = 22;
-        const hourHeight = 60; // pixels per hour
 
         for (let h = startHour; h <= endHour; h++) {
           const displayHour = h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`;
@@ -2776,21 +2772,10 @@ function render() {
 
       container.innerHTML = html;
 
-      // Now inject event blocks into the corresponding hour slots with absolute positioning
       days.forEach(dayKey => {
         const dayEvents = savedEvents.filter(e => e.Day === dayKey);
         if (dayEvents.length === 0) return;
 
-        const gridEl = container.querySelector(`.cal-grid:has(.cal-day-header)`); // or locate via container lookup
-        // Let's position accurately per day grid container:
-      });
-
-      // Cleaner approach to inject blocks post-render:
-      days.forEach(dayKey => {
-        const dayEvents = savedEvents.filter(e => e.Day === dayKey);
-        if (dayEvents.length === 0) return;
-
-        // Find the specific day container
         const headers = container.querySelectorAll(".cal-day-header");
         let targetGrid = null;
         headers.forEach(hdr => {
@@ -2805,11 +2790,10 @@ function render() {
         dayEvents.forEach(ev => {
           const startMins = parseTimeToMinutes(ev["Start Time"]);
           const endMins = parseTimeToMinutes(ev["End Time"]);
-          const durationMins = Math.max(30, endMins - startMins); // minimum 30m block height
+          const durationMins = Math.max(30, endMins - startMins);
 
-          // Grid starts at 9:00 AM (540 minutes)
           const dayStartMins = 9 * 60;
-          const topPx = ((startMins - dayStartMins) / 60) * 60; // 60px per hour
+          const topPx = ((startMins - dayStartMins) / 60) * 60;
           const heightPx = (durationMins / 60) * 60;
 
           if (topPx >= 0) {
@@ -2822,7 +2806,6 @@ function render() {
               <h4 class="event-title">${escapeHtml(ev.Name)}</h4>
               ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
             `;
-            // Click to remove or view details
             block.onclick = () => {
               if (confirm(`Remove "${ev.Name}" from your calendar?`)) {
                 savedIds.delete(ev.id);
@@ -2835,6 +2818,43 @@ function render() {
         });
       });
 
+      return;
+    }
+
+    // --- Standard BROWSE Mode Filtering & Rendering ---
+    const conflictIds = getConflicts();
+    let filtered = EVENTS.filter(ev => {
+      if (state.day !== "ALL" && ev.Day !== state.day) return false;
+      if (state.location !== "ALL" && ev.Location !== state.location) return false;
+      if (state.tag !== "ALL") {
+        const evTags = (ev.Tags || "").split(",").map(t => t.trim());
+        if (!evTags.includes(state.tag)) return false;
+      }
+      if (q) {
+        const hay = `${ev.Name} ${ev["Featured Guests"]} ${ev.Location} ${ev.Description} ${ev.Tags}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    // Sort by Day, then Start Time, then Name
+    filtered.sort((a, b) => {
+      if (a.Day !== b.Day) return a.Day.localeCompare(b.Day);
+      const tDiff = parseTimeToMinutes(a["Start Time"]) - parseTimeToMinutes(b["Start Time"]);
+      if (tDiff !== 0) return tDiff;
+      return a.Name.localeCompare(b.Name);
+    });
+
+    document.getElementById("resultsCount").textContent =
+      `${filtered.length} event${filtered.length === 1 ? "" : "s"} shown`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h3>No matching events found</h3>
+          <p>Try clearing your search or switching day/room filters.</p>
+        </div>
+      `;
       return;
     }
 
@@ -2854,12 +2874,11 @@ function render() {
       html += `<div class="event-list">`;
       dayEvents.forEach(ev => {
         const isSaved = savedIds.has(ev.id);
-        const hasConflict = isSaved && conflictIds.has(ev.id);
         const isExpanded = state.expandedDesc.has(ev.id);
         const tagsList = (ev.Tags || "").split(",").map(t => t.trim()).filter(Boolean);
         const longDesc = ev.Description && ev.Description.length > 180;
 
-		html += `
+        html += `
           <article class="event-card ${isSaved ? "selected" : ""} ">
             <div>
               <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
