@@ -2778,15 +2778,6 @@
   const STORAGE_KEY = "dsn2026_my_schedule_v1";
   let savedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
 
-  let state = {
-    mode: "BROWSE", // "BROWSE" | "MY"
-    day: "2026-12-03",
-    search: "",
-    location: "ALL",
-    tag: "ALL",
-    expandedDesc: new Set()
-  };
-
   function saveToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...savedIds]));
     document.getElementById("savedCountBadge").textContent = savedIds.size;
