@@ -202,13 +202,8 @@
     .tag-strip {
       display: flex;
       gap: 6px;
-      overflow-x: auto;
+      flex-wrap: wrap;
       padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-
-    .tag-strip::-webkit-scrollbar {
-      display: none;
     }
 
     .tag-chip {
@@ -498,7 +493,7 @@
       align-items: center;
     }
 
-.cal-hours-container {
+	.cal-hours-container {
       position: relative;
       max-height: 650px;
       overflow-y: auto;
@@ -687,6 +682,54 @@
       color: var(--accent);
       text-decoration: underline;
     }
+	
+	/* Zoomable Map Stuff */
+	.zoomable-map-container {
+      width: 100%;
+      height: 65vh;
+      overflow: auto;
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .zoomable-map-container:active {
+      cursor: grabbing;
+    }
+
+    .zoomable-map-image {
+      display: block;
+      max-width: none;
+      width: 100%;
+      height: auto;
+      transition: width 0.1s ease-out;
+      pointer-events: none; /* Prevents ghost-dragging the image file */
+    }
+
+    .map-zoom-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .map-zoom-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .map-zoom-btn:hover {
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -745,12 +788,13 @@
   <div class="bottom-nav-inner" style="grid-template-columns: 1fr 1fr 1fr;">
     <button class="nav-mode-btn active" id="modeBrowseBtn">Browse Schedule</button>
     <button class="nav-mode-btn" id="modeMyBtn">My Calendar <span class="badge-count" id="savedCountBadge">0</span></button>
-    <button class="nav-mode-btn" id="modeMapBtn">Event Map</button>
+    <button class="nav-mode-btn" id="modeMapBtn">Map</button>
   </div>
 </nav>
 
 <script>
   const DEFAULT_EVENTS_DATA = [
+  /* Thursday */
   {
     "Name": "Cosmere RPG: Hope in Ashes",
     "Day": "2026-12-03",
@@ -812,6 +856,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Nexus Art Gallery Opening",
+    "Day": "2026-12-03",
+    "Start Time": "10:00 AM",
+    "End Time": "10:30 AM",
+    "Featured Guests": "Isaac Stewart, Emily Sanderson",
+    "Location": "Art Gallery (Room 150)",
+    "Description": "Come for the official opening of the Dragonsteel Nexus Art Gallery, featuring submissions from all corners of the Cosmere and beyond, created by our amazing community.",
+    "Tags": "Art"
+  },
+  {
     "Name": "Rhythms of the Cosmere",
     "Day": "2026-12-03",
     "Start Time": "10:00 AM",
@@ -828,7 +882,17 @@
     "End Time": "11:15 AM",
     "Featured Guests": "Lydia Suen, Johnny O'Neal, Ross Leiser, Matt DeMino, Hayden Dillard, Brooke Whitney, Meric Moir",
     "Location": "Lumar (Room 250)",
-    "Description": "Join the team at Brotherwise Games for an inside look at the current state of Cosmere gaming. Expect exciting developments, ongoing projects, and maybe. . . a glimpse at what lies ahead?Your next adventure is at your fingertips!",
+    "Description": "Join the team at Brotherwise Games for an inside look at the current state of Cosmere gaming. Expect exciting developments, ongoing projects, and maybe. . . a glimpse at what lies ahead? Your next adventure is at your fingertips!",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "The Bound and The Broken: Trading Card Game",
+    "Day": "2026-12-03",
+    "Start Time": "10:00 AM",
+    "End Time": "11:00 AM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "In The Bound and The Broken: Trading Card Game the story is yours tell. Players build their decks with one goal in mind: victory. Assemble a host of unforgettable characters, indomitable dragons, and legendary warriors to battle your opponent across your chosen plots, with the fate of the entire world at stake. In this fast-paced gauntlet, every choice matters. Can you be the hero who wins the day?",
     "Tags": "Gaming"
   },
   {
@@ -932,6 +996,16 @@
     "Tags": "Fantasy"
   },
   {
+    "Name": "Cosmere RPG: Robbery on Fathom Lane",
+    "Day": "2026-12-03",
+    "Start Time": "12:00 PM",
+    "End Time": "2:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Get a taste of Era 2 Mistborn with an exclusive sneak peek. Chase daring gangsters across the streets of Eighth Octant of Elendel! Be the first to play an upcoming Elendel adventure in the Mistborn setting for the Cosmere® RPG! This 3rd-level action adventure features dangerous gangsters and the hunt for a stolen artifact. You'll play as Mistings, Ferrings, and Twinborn in a tight-knit group of treasure hunters facing off against operatives of the nefarious Morgenthax crime familiy. No preparation needed, just bring some dice and a pencil; we'll provide pre-generated characters.",
+    "Tags": "Gaming"
+  },
+  {
     "Name": "Emotional Damage: Causing Devastation in your Audience",
     "Day": "2026-12-03",
     "Start Time": "12:00 PM",
@@ -970,6 +1044,26 @@
     "Location": "Game Room (Room 155)",
     "Description": "Join us for a Disney Lorcana Collection Quest! These events are a quick and fun cooperative group activity! At the start of the event, everyone receives 2 Attack of the Vine Packs, as well as quest cards featuring a list of a few Disney Lorcana cards. The goal of the activity is for participants to find the cards on their quest card by trading with others. Open some packs, socialize and trade with others and enjoy a quick break in the game room!",
     "Tags": "Gaming"
+  },
+  {
+    "Name": "Luminous Card Game",
+    "Day": "2026-12-03",
+    "Start Time": "12:00 PM",
+    "End Time": "1:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Learn how to play Luminous, a 1v1 expandable card game where factions vie for control of a mysterious continent. Players will use pre-constructed decks from our starter set, The Wanderers. After completing their match, players will receive a limited, alternate frame promo of \"\"Quinn, Crown Prince\"\" as a reward.",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosplay Meetup: Skyward Flight Crew",
+    "Day": "2026-12-03",
+    "Start Time": "12:30 PM",
+    "End Time": "1:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Calling all flight crew!!! Come travel the stars and meetup with other Skyward cosplayers",
+    "Tags": "Craft"
   },
   {
     "Name": "Editorial Process 101",
@@ -1032,6 +1126,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Luminous Card Game",
+    "Day": "2026-12-03",
+    "Start Time": "1:00 PM",
+    "End Time": "2:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Learn how to play Luminous, a 1v1 expandable card game where factions vie for control of a mysterious continent. Players will use pre-constructed decks from our starter set, The Wanderers. After completing their match, players will receive a limited, alternate frame promo of \"\"Quinn, Crown Prince\"\" as a reward.",
+    "Tags": "Gaming"
+  },
+  {
     "Name": "Magic: The Gathering—Reality Fracture Draft",
     "Day": "2026-12-03",
     "Start Time": "1:00 PM",
@@ -1059,7 +1163,37 @@
     "Featured Guests": "Shannon Chakraborty, Davis Ashura, Andrew Rubin, Tesia Tsai, Janell Rhiannon",
     "Location": "Scadrial (Grand Ballroom)",
     "Description": "Explore how we reshape mythology, new and old, to our times today and what that says about our culture and the changing nature of myths themselves.",
-    "Tags": "Silverlight University, Writing"
+    "Tags": "Featured Guest, Silverlight University, Writing"
+  },
+  {
+    "Name": "Cosmere RPG: Echoes of the Lost",
+    "Day": "2026-12-03",
+    "Start Time": "2:00 PM",
+    "End Time": "6:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Get a taste of the Mistborn Legacy campaign book and uncover the heinous secrets of a mysterious group of nobles in the northern city of Urteau. A year after the fall of the Final Empire, a simple job in Urteau is complicated when your boss goes missing. This 1st-level horror adventure is a preview of “Mistborn Legacy,” the era-spanning action horror adventure campaign for the Mistborn setting. Descend into a mysterious hidden compound and discover its dark purpose… No preparation needed, just bring some dice and a pencil; we’ll provide pre-generated characters. Content warning: this adventure includes horror themes, including descriptions of graphic violence.",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosmere RPG: Robbery on Fathom Lane",
+    "Day": "2026-12-03",
+    "Start Time": "2:00 PM",
+    "End Time": "4:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Get a taste of Era 2 Mistborn with an exclusive sneak peek. Chase daring gangsters across the streets of Eighth Octant of Elendel! Be the first to play an upcoming Elendel adventure in the Mistborn setting for the Cosmere® RPG! This 3rd-level action adventure features dangerous gangsters and the hunt for a stolen artifact. You'll play as Mistings, Ferrings, and Twinborn in a tight-knit group of treasure hunters facing off against operatives of the nefarious Morgenthax crime familiy. No preparation needed, just bring some dice and a pencil; we'll provide pre-generated characters.",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosplay Meetup: Mistborn Era 1",
+    "Day": "2026-12-03",
+    "Start Time": "2:00 PM",
+    "End Time": "3:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Join the mists and meetup with other Mistborn Era 1 cosplayers.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Learn to Play Mistborn: The Deckbuilding Game - Well of Ascension",
@@ -1089,6 +1223,16 @@
     "Featured Guests": "",
     "Location": "Game Room (Room 155)",
     "Description": "Join us for a Disney Lorcana Collection Quest! These events are a quick and fun cooperative group activity! At the start of the event, everyone receives 2 Attack of the Vine Packs, as well as quest cards featuring a list of a few Disney Lorcana cards. The goal of the activity is for participants to find the cards on their quest card by trading with others. Open some packs, socialize and trade with others and enjoy a quick break in the game room!",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Luminous Card Game",
+    "Day": "2026-12-03",
+    "Start Time": "2:00 PM",
+    "End Time": "3:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Learn how to play Luminous, a 1v1 expandable card game where factions vie for control of a mysterious continent. Players will use pre-constructed decks from our starter set, The Wanderers. After completing their match, players will receive a limited, alternate frame promo of \"\"Quinn, Crown Prince\"\" as a reward.",
     "Tags": "Gaming"
   },
   {
@@ -1182,6 +1326,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: Carl & Princess Donut",
+    "Day": "2026-12-03",
+    "Start Time": "3:30 PM",
+    "End Time": "4:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Calling all crawlers! This meetup is for all our DCC cosplay. YAY!!",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "Welcome Ceremony",
     "Day": "2026-12-03",
     "Start Time": "3:30 PM",
@@ -1190,6 +1344,16 @@
     "Location": "Roshar (Main Stage)",
     "Description": "Let's get this party started!!",
     "Tags": "Brandon Sanderson"
+  },
+  {
+    "Name": "Cosmere RPG: Robbery on Fathom Lane",
+    "Day": "2026-12-03",
+    "Start Time": "4:00 PM",
+    "End Time": "6:00 PM",
+    "Featured Guests": "",
+    "Location": "Game Room (Room 155)",
+    "Description": "Get a taste of Era 2 Mistborn with an exclusive sneak peek. Chase daring gangsters across the streets of Eighth Octant of Elendel! Be the first to play an upcoming Elendel adventure in the Mistborn setting for the Cosmere® RPG! This 3rd-level action adventure features dangerous gangsters and the hunt for a stolen artifact. You'll play as Mistings, Ferrings, and Twinborn in a tight-knit group of treasure hunters facing off against operatives of the nefarious Morgenthax crime familiy. No preparation needed, just bring some dice and a pencil; we'll provide pre-generated characters.",
+    "Tags": "Gaming"
   },
   {
     "Name": "Learn to Play Boss Monster Jr.",
@@ -1222,7 +1386,7 @@
     "Tags": "Gaming"
   },
   {
-    "Name": "The Astronomy of  the Cosmere",
+    "Name": "The Astronomy of the Cosmere",
     "Day": "2026-12-03",
     "Start Time": "4:00 PM",
     "End Time": "5:15 PM",
@@ -1280,6 +1444,16 @@
     "Location": "Lumar (Room 250)",
     "Description": "Magic doesn’t have to live only in fantasy novels. Let’s explore how we can add a little enchantment to everyday life. Join our panelists as they discuss the art of making the ordinary feel extraordinary and how a touch of imagination can make every day more magical.",
     "Tags": "Fantasy"
+  },
+  {
+    "Name": "Cosplay Meetup: Kholin Family Reunion",
+    "Day": "2026-12-03",
+    "Start Time": "5:00 PM",
+    "End Time": "6:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Everyone loves a family reunion!! Come meetup with your fellow Kholin Family cosplayers.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Learn to Play Boss Monster Jr.",
@@ -1381,6 +1555,7 @@
     "Description": "Come celebrate the release of The Fires of December and listen to Brandon and Emily’s special keynote address, streamed to each programming room of the convention! We can’t say too much more—there’s always another secret!",
     "Tags": "Brandon Sanderson"
   },
+  /* Friday */
   {
     "Name": "Cosmere RPG: Hope in Ashes",
     "Day": "2026-12-04",
@@ -1502,6 +1677,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: All the Hoids",
+    "Day": "2026-12-04",
+    "Start Time": "11:00 AM",
+    "End Time": "12:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "They seek him here. They seek him there. The Cosmere seeks him everywhere. Come to this cosplay meetup and find all of them.",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "Cosplay Workshop: Mini Fog Machine",
     "Day": "2026-12-04",
     "Start Time": "11:00 AM",
@@ -1539,6 +1724,16 @@
     "Featured Guests": "",
     "Location": "Game Room (Room 155)",
     "Description": "Come and compete in Dragonsteel's MTG CEDH Commander tournament. Winner's of each round will continue to the next round the next day. All decks will follow the deck regulations according to the Wizards of the Coast Commander rules.",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Sit, Stitch & Serve",
+    "Day": "2026-12-04",
+    "Start Time": "11:00 AM",
+    "End Time": "12:00 PM",
+    "Featured Guests": "",
+    "Location": "Sel - Craft Room (Room 255)",
+    "Description": "Make an 8 inch square either knitted or crocheted. They will be donated to Knit-A-Square.com, who will make them into blankets for orphans in South Africa. This is a project that will be happening all day long.",
     "Tags": "Gaming"
   },
   {
@@ -1652,6 +1847,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: Sprens & Their Besties",
+    "Day": "2026-12-04",
+    "Start Time": "12:30 PM",
+    "End Time": "1:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Syl and Kaladin. Pattern and Shallan, They go together like peanut butter and jelly. Come to this cosplay meetup with your bestie!",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "16-Player Mario Kart",
     "Day": "2026-12-04",
     "Start Time": "1:00 PM",
@@ -1662,16 +1867,6 @@
     "Tags": "Gaming"
   },
   {
-    "Name": "Cosmedicine",
-    "Day": "2026-12-04",
-    "Start Time": "1:00 PM",
-    "End Time": "2:15 PM",
-    "Featured Guests": "Phil Griffith, Aaron Johnson, Dan West, Branden Hunsaker",
-    "Location": "Lumar (Room 250)",
-    "Description": "Paging Dr. Radiant! Explore Cosmere Medicine, specifically battlefield and trauma medicine on Roshar, and how it compares with modern battlefield/military medicine. Enjoy the exploration of things we all love, specifically acute medicine and fantasy literature!",
-    "Tags": "Silverlight University"
-  },
-  {
     "Name": "Cosmere Trivia",
     "Day": "2026-12-04",
     "Start Time": "1:00 PM",
@@ -1680,6 +1875,16 @@
     "Location": "Roshar (Main Stage)",
     "Description": "Think you know the Cosmere? We'll see about that. Expect obscure lore and questions that will challenge even the most dedicated fans.",
     "Tags": "Lore"
+  },
+  {
+    "Name": "Cosplay Meetup: Fires of December",
+    "Day": "2026-12-04",
+    "Start Time": "1:00 PM",
+    "End Time": "2:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Demons welcome! Fires of December cosplay meetup",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Inside Dragonsteel Art: Fires of December, ChasmFriends, & the Skyward Leatherbound",
@@ -1790,6 +1995,16 @@
     "Location": "Game Room (Room 155)",
     "Description": "Get a taste of Era 2 Mistborn with an exclusive sneak peek. Chase daring gangsters across the streets of Eighth Octant of Elendel! Be the first to play an upcoming Elendel adventure in the Mistborn setting for the Cosmere® RPG! This 3rd-level action adventure features dangerous gangsters and the hunt for a stolen artifact. You'll play as Mistings, Ferrings, and Twinborn in a tight-knit group of treasure hunters facing off against operatives of the nefarious Morgenthax crime familiy. No preparation needed, just bring some dice and a pencil; we'll provide pre-generated characters.",
     "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosplay Meetup: Mmmm Spren",
+    "Day": "2026-12-04",
+    "Start Time": "2:00 PM",
+    "End Time": "3:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Mmmmm so many lies. MMmm so much Cosplayers.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Hearthside with Ryan Cahill & Philip C. Quaintrell",
@@ -1932,6 +2147,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Story Time with the Cosmere Librarians",
+    "Day": "2026-12-04",
+    "Start Time": "3:30 PM",
+    "End Time": "4:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Join our outstanding Librarians at story time in the Plaza.",
+    "Tags": ""
+  },
+  {
     "Name": "Behind the Scenes with Dragonsteel Creative Department: Part 2—From the Cognitive Realm to the Physical Realm",
     "Day": "2026-12-04",
     "Start Time": "4:00 PM",
@@ -1970,6 +2195,16 @@
     "Location": "Lumar (Room 250)",
     "Description": "Who wants to live forever? In fiction, immortality often comes at a cost. The Cosmere is no different.\n\nJoin us as we explore the various consequences of immortality. As hundreds of years become thousands, how does power become a prison? What happens when the person you once were fades away? After all, forever is an awfully long time...",
     "Tags": "Lore"
+  },
+  {
+    "Name": "Cosplay Meetup: Vin & Elend",
+    "Day": "2026-12-04",
+    "Start Time": "4:30 PM",
+    "End Time": "5:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Come in your cosplay as Vin and Elend for this cosplay meetup.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Hearthside with Shannon Chakraborty",
@@ -2030,6 +2265,16 @@
     "Location": "The Library (Room 251)",
     "Description": "Join our panelists as they seek to show how Allomancy could work in reality using physics and biology.\n\nWhat happens when you put Allomancy through the scientific method? Could a Coinshot really launch themselves through the air? How would burning metals affect the human body? And just how much of Scadrial's magic could hold up under the laws of physics?\n\nThey won't just explain the magic—they'll put it to the test!",
     "Tags": "Silverlight University"
+  },
+  {
+    "Name": "Cosplay Meetup: Kaladin, Shallan, & Adolin",
+    "Day": "2026-12-04",
+    "Start Time": "6:00 PM",
+    "End Time": "7:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "We're just three friends. Three good friends. Three best friends!! Cosplay meetup.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "WorldSwappers Meetup",
@@ -2101,6 +2346,7 @@
     "Description": "Come watch the masters at work as they paint something for charity.",
     "Tags": "Art"
   },
+  /* Saturday */
   {
     "Name": "Cosmere RPG: Echoes of the Lost",
     "Day": "2026-12-05",
@@ -2192,6 +2438,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: Bridge 4",
+    "Day": "2026-12-05",
+    "Start Time": "11:00 AM",
+    "End Time": "12:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "You know Rock, and The Lopen, and a random cousin. Teft, Sigzil, and Skar. But do you recall the most hated member of all.....Moash!!! Grab your bridge for this cosplay meetup!",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "Cosplay Workshop: Saturday Mini Fog Machine",
     "Day": "2026-12-05",
     "Start Time": "11:00 AM",
@@ -2230,6 +2486,26 @@
     "Location": "Game Room (Room 155)",
     "Description": "Come and compete in Dragonsteel's MTG CEDH Commander tournament. Winner's of each round will continue to the next round the next day. All decks will follow the deck regulations according to the Wizards of the Coast Commander rules.",
     "Tags": "Gaming"
+  },
+  {
+    "Name": "Sit, Stitch & Serve",
+    "Day": "2026-12-05",
+    "Start Time": "11:00 AM",
+    "End Time": "12:00 PM",
+    "Featured Guests": "",
+    "Location": "Sel - Craft Room (Room 255)",
+    "Description": "Make an 8 inch square either knitted or crocheted. They will be donated to Knit-A-Square.com, who will make them into blankets for orphans in South Africa. This is a project that will be happening all day long.",
+    "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosplay Meetup: Doom Slugs & Friends",
+    "Day": "2026-12-04",
+    "Start Time": "11:30 AM",
+    "End Time": "12:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "All the Slugs, M-bots, and flight crew cosplay meetup.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "In the Library with Janci Patterson",
@@ -2330,6 +2606,16 @@
     "Location": "Game Room (Room 155)",
     "Description": "Attendees receive two booster packs and a list of common cards and uncommon cards to collect. They will trade with other attendees to complete their list. Attendees can keep any rare's or above that they pull!",
     "Tags": "Gaming"
+  },
+  {
+    "Name": "Cosplay Meetup: Tress's Emerald Sea Voyage",
+    "Day": "2026-12-05",
+    "Start Time": "12:30 PM",
+    "End Time": "1:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Tress grab your pirate crew and Huck we are going on an adventure with this cosplay meetup.",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Swords, Swords, Swords!!!",
@@ -2502,6 +2788,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: All the Brandons!!",
+    "Day": "2026-12-05",
+    "Start Time": "2:00 PM",
+    "End Time": "3:00 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "All the Brandons, all the cosplay. ( Brandon Sanderson will not be at this meetup, up his look-a-likes)",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "Learn to Play Mechs vs. Minions",
     "Day": "2026-12-05",
     "Start Time": "2:00 PM",
@@ -2540,6 +2836,16 @@
     "Location": "The Library (Room 251)",
     "Description": "Join our panelists as they explore the successes, failures, and questionable management strategies of the Cosmere's most influential figures. Whether you're leading a team, building a business, or just trying to survive your next bridge run, come see what the Cosmere MBA has in store for you!",
     "Tags": "Silverlight University"
+  },
+  {
+    "Name": "Cosplay Meetup: Yumi, & Painter, & Nightmares OH MY!!",
+    "Day": "2026-12-05",
+    "Start Time": "2:30 PM",
+    "End Time": "3:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Meetup with other Yumis, Painters, and Nightmares!",
+    "Tags": "Art, Craft"
   },
   {
     "Name": "Physics of the Cosmere",
@@ -2612,6 +2918,16 @@
     "Tags": "Gaming"
   },
   {
+    "Name": "Cosplay Meetup: Mistborn Era 2",
+    "Day": "2026-12-05",
+    "Start Time": "3:30 PM",
+    "End Time": "4:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "The wildest coin slinging, metal eating Mistborn Era 2 cosplay meetup!!",
+    "Tags": "Art, Craft"
+  },
+  {
     "Name": "The Many Faces of Fantasy Heroines",
     "Day": "2026-12-05",
     "Start Time": "3:30 PM",
@@ -2630,16 +2946,6 @@
     "Location": "Game Room (Room 155)",
     "Description": "Get a taste of Era 2 Mistborn with an exclusive sneak peek. Chase daring gangsters across the streets of Eighth Octant of Elendel! Be the first to play an upcoming Elendel adventure in the Mistborn setting for the Cosmere® RPG! This 3rd-level action adventure features dangerous gangsters and the hunt for a stolen artifact. You'll play as Mistings, Ferrings, and Twinborn in a tight-knit group of treasure hunters facing off against operatives of the nefarious Morgenthax crime familiy. No preparation needed, just bring some dice and a pencil; we'll provide pre-generated characters.",
     "Tags": "Gaming"
-  },
-  {
-    "Name": "Guiding Your Loved Ones Through the Cosmere",
-    "Day": "2026-12-05",
-    "Start Time": "4:00 PM",
-    "End Time": "5:15 PM",
-    "Featured Guests": "Megan Lloyd, Emily Lloyd, Hayden Gray, Steven Walker",
-    "Location": "Lumar (Room 250)",
-    "Description": "We all have that special someone in our lives who we just KNOW would love the Cosmere, if only we could convince them to pick up a book! But where should they begin? Mistborn? Tress? Do we dare suggest the Stormlight Archive? One wrong move and they might never trust our book recommendations again!\n\nWe've all tried it, and some of us have failed. But that's okay—you're strong for being here, willing to learn.\n\nIt's time to prepare for the daunting task of introducing your loved ones to Brandon Sanderson's universe. Because choosing someone's first Cosmere book isn't just a recommendation. It's a responsibility. Their DESTINY is in your hands!",
-    "Tags": "Fantasy"
   },
   {
     "Name": "The Magic of Music: Diving Deeper into The Songs of the Dead",
@@ -2775,6 +3081,13 @@
     id: `dsn26-${idx}-${ev.Day}-${ev["Start Time"]}-${ev.Name}`.replace(/[^a-zA-Z0-9-_]/g, '_')
   }));
 
+  const HIDDEN_STORAGE_KEY = "dsn2026_hidden_events_v1";
+  let hiddenIds = new Set(JSON.parse(localStorage.getItem(HIDDEN_STORAGE_KEY) || "[]"));
+
+  function saveHiddenToStorage() {
+    localStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify([...hiddenIds]));
+  }
+
   const STORAGE_KEY = "dsn2026_my_schedule_v1";
   let savedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
 
@@ -2866,6 +3179,103 @@
       .join("");
   }
 
+  function initInteractiveMap(containerEl, imgEl, zoomInBtn, zoomOutBtn, resetBtn) {
+    let currentScale = 1;
+
+    const updateScale = () => {
+      imgEl.style.width = `${currentScale * 100}%`;
+    };
+
+    // Zoom Buttons
+    zoomInBtn.onclick = () => {
+      currentScale = Math.min(currentScale + 0.35, 3.5);
+      updateScale();
+    };
+
+    zoomOutBtn.onclick = () => {
+      currentScale = Math.max(currentScale - 0.35, 1);
+      updateScale();
+    };
+
+    resetBtn.onclick = () => {
+      currentScale = 1;
+      updateScale();
+      containerEl.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    };
+
+    // Mouse Wheel Zoom
+    containerEl.onwheel = (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        currentScale = Math.min(currentScale + 0.15, 3.5);
+      } else {
+        currentScale = Math.max(currentScale - 0.15, 1);
+      }
+      updateScale();
+    };
+
+    // --- Click-and-Drag (Desktop) & Touch-Drag (Mobile) Panning ---
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollLeft = 0;
+    let scrollTop = 0;
+
+    // Mouse events (Left click = button 0)
+    containerEl.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      startX = e.pageX - containerEl.offsetLeft;
+      startY = e.pageY - containerEl.offsetTop;
+      scrollLeft = containerEl.scrollLeft;
+      scrollTop = containerEl.scrollTop;
+    });
+
+    containerEl.addEventListener("mouseleave", () => {
+      isDragging = false;
+    });
+
+    containerEl.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+
+    containerEl.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - containerEl.offsetLeft;
+      const y = e.pageY - containerEl.offsetTop;
+      const walkX = (x - startX) * 1.2; // Scroll speed multiplier
+      const walkY = (y - startY) * 1.2;
+      containerEl.scrollLeft = scrollLeft - walkX;
+      containerEl.scrollTop = scrollTop - walkY;
+    });
+
+    // Touch events (Single-finger drag on mobile/tablets)
+    containerEl.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      isDragging = true;
+      startX = e.touches[0].pageX - containerEl.offsetLeft;
+      startY = e.touches[0].pageY - containerEl.offsetTop;
+      scrollLeft = containerEl.scrollLeft;
+      scrollTop = containerEl.scrollTop;
+    }, { passive: true });
+
+    containerEl.addEventListener("touchend", () => {
+      isDragging = false;
+    });
+
+    containerEl.addEventListener("touchmove", (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      e.preventDefault(); // Prevents the whole page from bouncing while panning the map
+      const x = e.touches[0].pageX - containerEl.offsetLeft;
+      const y = e.touches[0].pageY - containerEl.offsetTop;
+      const walkX = x - startX;
+      const walkY = y - startY;
+      containerEl.scrollLeft = scrollLeft - walkX;
+      containerEl.scrollTop = scrollTop - walkY;
+    }, { passive: false });
+  }
+
   function openEventModal(eventId) {
     const ev = EVENTS.find(e => e.id === eventId);
     if (!ev) return;
@@ -2931,6 +3341,8 @@
     "Sel - Craft Room (Room 255)": "assets/sel.png",
     "The Hearth (Room 251 ABC)": "assets/thehearth.png",
     "The Library (Room 251)": "assets/thelibrary.png",
+	"Plaza": "assets/plaza.png",
+	"Art Gallery (Room 150)": "assets/artgallery.png",
     "default": "assets/dsn2026map.png"
   };
 
@@ -2941,7 +3353,7 @@
     location: "ALL",
     tag: "ALL",
     expandedDesc: new Set(),
-    activeMap: "default" // "default" | "exhibition"
+    activeMap: "default" // "default" | "exhibitor"
   };
 
   function getMapImageForLocation(locationName) {
@@ -2951,7 +3363,6 @@
   function openMapModal(locationName, fromEvent = false) {
     const imageSrc = getMapImageForLocation(locationName);
     
-    // Clear time badge when viewing map directly
     if (!fromEvent) {
       window.currentModalEventId = null;
       document.getElementById("modalTimeBadge").textContent = "Venue Map";
@@ -2959,8 +3370,15 @@
 
     document.getElementById("modalBody").innerHTML = `
       <h3 style="margin: 0 0 8px 0; font-size: 1.15rem; text-align: center;">📍 ${escapeHtml(locationName)}</h3>
-      <div style="text-align: center; background: #000; border-radius: 8px; overflow: hidden; padding: 10px; border: 1px solid var(--border);">
-        <img src="${imageSrc}" alt="Map for ${escapeHtml(locationName)}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+      
+      <div class="zoomable-map-container" id="mapScrollContainer">
+        <img src="${imageSrc}" alt="Map for ${escapeHtml(locationName)}" class="zoomable-map-image" id="zoomableMapImg" />
+      </div>
+
+      <div class="map-zoom-controls">
+        <button class="map-zoom-btn" id="zoomOutBtn">Zoom -</button>
+        <button class="map-zoom-btn" id="zoomResetBtn">Reset</button>
+        <button class="map-zoom-btn" id="zoomInBtn">Zoom +</button>
       </div>
     `;
     
@@ -2979,40 +3397,67 @@
     }
 
     eventModal.classList.add("open");
+
+    // Initialize drag-to-pan & zoom controls for the modal map
+    initInteractiveMap(
+      document.getElementById("mapScrollContainer"),
+      document.getElementById("zoomableMapImg"),
+      document.getElementById("zoomInBtn"),
+      document.getElementById("zoomOutBtn"),
+      document.getElementById("zoomResetBtn")
+    );
   }
 
-function render() {
+  function render() {
     const container = document.getElementById("eventsContainer");
     const q = state.search.toLowerCase().trim();
 
-    // --- Event Map Mode ---
+    // --- Map Mode ---
     if (state.mode === "MAP") {
-      document.getElementById("resultsCount").textContent = "Convention Venue & Exhibition Maps";
+      document.getElementById("resultsCount").textContent = "Venue & Exhibitor Maps";
       
-      const activeImg = state.activeMap === "exhibition" 
+      const activeImg = state.activeMap === "exhibitor" 
         ? "assets/exhibitorhallmap.png" 
         : "assets/dsn2026map.png";
 
       container.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 10px 0;">
+        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 10px 0; width: 100%;">
           <div style="display: flex; gap: 8px; margin-bottom: 4px;">
-            <button class="day-tab ${state.activeMap === 'default' ? 'active' : ''}" id="mapTabDefault" style="padding: 6px 14px; cursor: pointer;">Event Map</button>
-            <button class="day-tab ${state.activeMap === 'exhibition' ? 'active' : ''}" id="mapTabExhibition" style="padding: 6px 14px; cursor: pointer;">Exhibition Hall</button>
+            <button class="day-tab ${state.activeMap === 'default' ? 'active' : ''}" id="mapTabDefault" style="padding: 6px 14px; cursor: pointer;">Dragonsteel Nexus Map</button>
+            <button class="day-tab ${state.activeMap === 'exhibitor' ? 'active' : ''}" id="mapTabExhibitor" style="padding: 6px 14px; cursor: pointer;">Exhibitor Hall</button>
           </div>
-          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; width: 100%; text-align: center; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);">
-            <img src="${activeImg}" alt="Convention Map" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          
+          <div class="zoomable-map-container" id="mapTabScrollContainer" style="width: 100%;">
+            <img src="${activeImg}" alt="Convention Map" class="zoomable-map-image" id="zoomableTabMapImg" />
+          </div>
+
+          <div class="map-zoom-controls">
+            <button class="map-zoom-btn" id="tabZoomOutBtn">Zoom -</button>
+            <button class="map-zoom-btn" id="tabZoomResetBtn">Reset</button>
+            <button class="map-zoom-btn" id="tabZoomInBtn">Zoom +</button>
           </div>
         </div>
       `;
 
+      // Tab switch handlers
       container.querySelector("#mapTabDefault").onclick = () => {
         state.activeMap = "default";
         render();
       };
-      container.querySelector("#mapTabExhibition").onclick = () => {
-        state.activeMap = "exhibition";
+      container.querySelector("#mapTabExhibitor").onclick = () => {
+        state.activeMap = "exhibitor";
         render();
       };
+
+      // Initialize drag-to-pan & zoom controls for the dedicated Map tab
+      initInteractiveMap(
+        container.querySelector("#mapTabScrollContainer"),
+        container.querySelector("#zoomableTabMapImg"),
+        container.querySelector("#tabZoomInBtn"),
+        container.querySelector("#tabZoomOutBtn"),
+        container.querySelector("#tabZoomResetBtn")
+      );
+
       return;
     }
 
@@ -3223,11 +3668,26 @@ function render() {
       html += `<div class="event-list">`;
       dayEvents.forEach(ev => {
         const isSaved = savedIds.has(ev.id);
+		const isHidden = hiddenIds.has(ev.id);
         const isExpanded = state.expandedDesc.has(ev.id);
         const tagsList = (ev.Tags || "").split(",").map(t => t.trim()).filter(Boolean);
         const longDesc = ev.Description && ev.Description.length > 180;
 
-        html += `
+        if (isHidden) {
+		  const stubStyle = isSaved
+			? "background: rgba(16, 185, 129, 0.12); border: 1px dashed #10b981; color: var(--text);"
+            : "background: rgba(30, 41, 59, 0.4); border: 1px dashed var(--border); color: var(--text-muted);";
+		  
+          html += `
+            <div style="${stubStyle} border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><s>${escapeHtml(ev.Name)}</s> <span style="font-size: 0.7rem; opacity: 0.8; margin-left: 4px;">(Hidden)</span></span>
+              <button class="expand-btn" data-unhide-id="${ev.id}" style="white-space: nowrap;">Unhide</button>
+            </div>
+          `;
+          return;
+        }
+
+		html += `
           <article class="event-card ${isSaved ? "selected" : ""} ">
             <div>
               <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
@@ -3256,9 +3716,12 @@ function render() {
               <div class="card-tags">
                 ${tagsList.map(t => `<span class="mini-tag">${escapeHtml(t)}</span>`).join("")}
               </div>
-              <button class="toggle-btn ${isSaved ? "saved" : ""}" data-toggle-id="${ev.id}">
-                ${isSaved ? "✕ Remove from Calendar" : "+ Add to Calendar"}
-              </button>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="expand-btn" data-hide-id="${ev.id}" style="color: var(--text-muted); font-size: 0.76rem;">Hide</button>
+                <button class="toggle-btn ${isSaved ? "saved" : ""}" data-toggle-id="${ev.id}">
+                  ${isSaved ? "✕ Remove from Calendar" : "+ Add to Calendar"}
+                </button>
+              </div>
             </div>
           </article>
         `;
@@ -3291,6 +3754,26 @@ function render() {
         } else {
           state.expandedDesc.add(id);
         }
+        render();
+      };
+    });
+
+  // Bind hide buttons
+    container.querySelectorAll("[data-hide-id]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-hide-id");
+        hiddenIds.add(id);
+        saveHiddenToStorage();
+        render();
+      };
+    });
+
+    // Bind unhide buttons
+    container.querySelectorAll("[data-unhide-id]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-unhide-id");
+        hiddenIds.delete(id);
+        saveHiddenToStorage();
         render();
       };
     });
@@ -3404,6 +3887,7 @@ function render() {
     state.mode = "BROWSE";
     document.getElementById("modeBrowseBtn").classList.add("active");
     document.getElementById("modeMyBtn").classList.remove("active");
+    document.getElementById("modeMapBtn").classList.remove("active");
     render();
   });
 
@@ -3411,9 +3895,10 @@ function render() {
     state.mode = "MY";
     document.getElementById("modeMyBtn").classList.add("active");
     document.getElementById("modeBrowseBtn").classList.remove("active");
+    document.getElementById("modeMapBtn").classList.remove("active");
     render();
   });
-  
+
   document.getElementById("modeMapBtn").addEventListener("click", () => {
     state.mode = "MAP";
     document.getElementById("modeMapBtn").classList.add("active");
