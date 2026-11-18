@@ -3301,7 +3301,6 @@ function render() {
         openEventModal(el.getAttribute("data-open-id"));
       };
     });
-  }
   
   // Bind clickable room names to open map modal
     container.querySelectorAll("[data-map-loc]").forEach(el => {
@@ -3310,6 +3309,7 @@ function render() {
         openMapModal(el.getAttribute("data-map-loc"), false);
       };
     });
+  }
 
     function exportToIcs() {
     const selected = EVENTS.filter(e => savedIds.has(e.id));
