@@ -2882,8 +2882,8 @@
       <div class="meta-row" style="margin-top: 0;">
         <span class="meta-item">🗓 ${DAY_LABELS[ev.Day]}</span>
         ${ev.Location ? `
-          <span class="meta-item" style="cursor: pointer; color: var(--accent);" onclick="openMapModal('${escapeHtml(ev.Location)}')">
-            📍 ${escapeHtml(ev.Location)} 🔍 <span style="text-decoration: underline; font-size: 0.75rem;">(View on Map)</span>
+          <span class="meta-item clickable-title" style="color: var(--accent);" onclick="openMapModal('${escapeHtml(ev.Location)}', true)">
+            📍 ${escapeHtml(ev.Location)}
           </span>
         ` : ""}
       </div>
@@ -2924,7 +2924,7 @@
   }
 
   const LOCATION_MAPS = {
-    "Game Room (Room 155)": "assets/thegameroom.png",
+    "Game Room (Room 155)": "assets/gameroom.png",
     "Lumar (Room 250)": "assets/lumar.png",
     "Roshar (Main Stage)": "assets/roshar.png",
     "Scadrial (Grand Ballroom)": "assets/scadrial.png",
@@ -2948,27 +2948,37 @@
     return LOCATION_MAPS[locationName] || LOCATION_MAPS["default"];
   }
 
-  function openMapModal(locationName) {
+  function openMapModal(locationName, fromEvent = false) {
     const imageSrc = getMapImageForLocation(locationName);
     
+    // Clear time badge when viewing map directly
+    if (!fromEvent) {
+      window.currentModalEventId = null;
+      document.getElementById("modalTimeBadge").textContent = "Venue Map";
+    }
+
     document.getElementById("modalBody").innerHTML = `
-      <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; text-align: center;">Map: ${escapeHtml(locationName)}</h3>
+      <h3 style="margin: 0 0 8px 0; font-size: 1.15rem; text-align: center;">📍 ${escapeHtml(locationName)}</h3>
       <div style="text-align: center; background: #000; border-radius: 8px; overflow: hidden; padding: 10px; border: 1px solid var(--border);">
         <img src="${imageSrc}" alt="Map for ${escapeHtml(locationName)}" style="max-width: 100%; height: auto; border-radius: 4px;" />
       </div>
     `;
     
-    // Switch the footer button back to event details
-    // (We store the active event ID so we can bounce back and forth smoothly)
-    document.getElementById("modalFooter").innerHTML = `
-      <button class="modal-back-btn" id="backToEventBtn">← Back to Event Details</button>
-    `;
-
-    document.getElementById("backToEventBtn").onclick = () => {
-      if (window.currentModalEventId) {
+    const footer = document.getElementById("modalFooter");
+    if (fromEvent && window.currentModalEventId) {
+      footer.innerHTML = `
+        <button class="modal-back-btn" id="backToEventBtn">← Back to Event Details</button>
+      `;
+      document.getElementById("backToEventBtn").onclick = () => {
         openEventModal(window.currentModalEventId);
-      }
-    };
+      };
+    } else {
+      footer.innerHTML = `
+        <button class="modal-back-btn" onclick="closeEventModal()">Close Map</button>
+      `;
+    }
+
+    eventModal.classList.add("open");
   }
 
 function render() {
@@ -2980,7 +2990,7 @@ function render() {
       document.getElementById("resultsCount").textContent = "Convention Venue & Exhibition Maps";
       
       const activeImg = state.activeMap === "exhibition" 
-        ? "assets/exhibitorhallmap.png" 
+        ? "assets/exhibitionhallmap.png" 
         : "assets/dsn2026map.png";
 
       container.innerHTML = `
@@ -3129,8 +3139,16 @@ function render() {
                 <button class="cal-remove-btn" title="Remove from Calendar" data-remove-id="${ev.id}">✕</button>
               </div>
               <h4 class="event-title clickable-title" data-open-id="${ev.id}">${escapeHtml(ev.Name)}</h4>
-              ${ev.Location ? `<div class="cal-event-loc">${escapeHtml(ev.Location)}</div>` : ""}
+              ${ev.Location ? `<div class="cal-event-loc clickable-title" style="color: var(--accent);" data-map-loc="${escapeHtml(ev.Location)}">📍 ${escapeHtml(ev.Location)}</div>` : ""}
             `;
+
+            const locEl = block.querySelector("[data-map-loc]");
+            if (locEl) {
+              locEl.onclick = (e) => {
+                e.stopPropagation();
+                openMapModal(ev.Location, false);
+              };
+            }
 
             block.querySelector("[data-open-id]").onclick = (e) => {
               e.stopPropagation();
@@ -3215,7 +3233,7 @@ function render() {
               <span class="time-badge">${escapeHtml(ev["Start Time"])} – ${escapeHtml(ev["End Time"])}</span>
               <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
                 <h2 class="event-title clickable-title" data-open-id="${ev.id}" style="margin: 0;">${escapeHtml(ev.Name)}</h2>
-                ${ev.Location ? `<span style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">${escapeHtml(ev.Location)}</span>` : ""}
+                ${ev.Location ? `<span class="clickable-title" data-map-loc="${escapeHtml(ev.Location)}" style="font-size: 0.82rem; color: var(--accent); white-space: nowrap;">📍 ${escapeHtml(ev.Location)}</span>` : ""}
               </div>
             </div>
 
@@ -3284,6 +3302,14 @@ function render() {
       };
     });
   }
+  
+  // Bind clickable room names to open map modal
+    container.querySelectorAll("[data-map-loc]").forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        openMapModal(el.getAttribute("data-map-loc"), false);
+      };
+    });
 
     function exportToIcs() {
     const selected = EVENTS.filter(e => savedIds.has(e.id));
