@@ -742,9 +742,10 @@
 </div>
 
 <nav class="bottom-nav">
-  <div class="bottom-nav-inner">
+  <div class="bottom-nav-inner" style="grid-template-columns: 1fr 1fr 1fr;">
     <button class="nav-mode-btn active" id="modeBrowseBtn">Browse Schedule</button>
     <button class="nav-mode-btn" id="modeMyBtn">My Calendar <span class="badge-count" id="savedCountBadge">0</span></button>
+    <button class="nav-mode-btn" id="modeMapBtn">Event Map</button>
   </div>
 </nav>
 
@@ -2878,6 +2879,8 @@
     const ev = EVENTS.find(e => e.id === eventId);
     if (!ev) return;
 
+    window.currentModalEventId = ev.id;
+	
     const isSaved = savedIds.has(ev.id);
     const tagsList = (ev.Tags || "").split(",").map(t => t.trim()).filter(Boolean);
 
@@ -2887,7 +2890,11 @@
       <h2 id="modalTitle" style="margin: 0; font-size: 1.25rem; line-height: 1.3;">${escapeHtml(ev.Name)}</h2>
       <div class="meta-row" style="margin-top: 0;">
         <span class="meta-item">🗓 ${DAY_LABELS[ev.Day]}</span>
-        ${ev.Location ? `<span class="meta-item">📍 ${escapeHtml(ev.Location)}</span>` : ""}
+        ${ev.Location ? `
+          <span class="meta-item" style="cursor: pointer; color: var(--accent);" onclick="openMapModal('${escapeHtml(ev.Location)}')">
+            📍 ${escapeHtml(ev.Location)} 🔍 <span style="text-decoration: underline; font-size: 0.75rem;">(View on Map)</span>
+          </span>
+        ` : ""}
       </div>
       ${ev["Featured Guests"] ? `
         <div class="guests-box" style="margin-top: 4px;">
@@ -2925,9 +2932,88 @@
     eventModal.classList.add("open");
   }
 
+  const LOCATION_MAPS = {
+    "Game Room (Room 155)": "assets/gameroom.png",
+    "Lumar (Room 250)": "assets/lumar.png",
+    "Roshar (Main Stage)": "assets/roshar.png",
+    "Scadrial (Grand Ballroom)": "assets/scadrial.png",
+    "Sel - Craft Room (Room 255)": "assets/sel.png",
+    "The Hearth (Room 251 ABC)": "assets/thehearth.png",
+    "The Library (Room 251)": "assets/thelibrary.png",
+    "default": "assets/dsn2026event.png"
+  };
+
+  let state = {
+    mode: "BROWSE", // "BROWSE" | "MY" | "MAP"
+    day: "2026-12-03",
+    search: "",
+    location: "ALL",
+    tag: "ALL",
+    expandedDesc: new Set(),
+    activeMap: "default" // "default" | "exhibition"
+  };
+
+  function getMapImageForLocation(locationName) {
+    return LOCATION_MAPS[locationName] || LOCATION_MAPS["default"];
+  }
+
+  function openMapModal(locationName) {
+    const imageSrc = getMapImageForLocation(locationName);
+    
+    document.getElementById("modalBody").innerHTML = `
+      <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; text-align: center;">Map: ${escapeHtml(locationName)}</h3>
+      <div style="text-align: center; background: #000; border-radius: 8px; overflow: hidden; padding: 10px; border: 1px solid var(--border);">
+        <img src="${imageSrc}" alt="Map for ${escapeHtml(locationName)}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+      </div>
+    `;
+    
+    // Switch the footer button back to event details
+    // (We store the active event ID so we can bounce back and forth smoothly)
+    document.getElementById("modalFooter").innerHTML = `
+      <button class="modal-back-btn" id="backToEventBtn">← Back to Event Details</button>
+    `;
+
+    document.getElementById("backToEventBtn").onclick = () => {
+      if (window.currentModalEventId) {
+        openEventModal(window.currentModalEventId);
+      }
+    };
+  }
+
 function render() {
     const container = document.getElementById("eventsContainer");
     const q = state.search.toLowerCase().trim();
+
+    // --- Event Map Mode ---
+    if (state.mode === "MAP") {
+      document.getElementById("resultsCount").textContent = "Convention Venue & Exhibition Maps";
+      
+      const activeImg = state.activeMap === "exhibition" 
+        ? "assets/exhibitionhallmap.png" 
+        : "assets/dsn2026event.png";
+
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 10px 0;">
+          <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+            <button class="day-tab ${state.activeMap === 'default' ? 'active' : ''}" id="mapTabDefault" style="padding: 6px 14px; cursor: pointer;">Event Map</button>
+            <button class="day-tab ${state.activeMap === 'exhibition' ? 'active' : ''}" id="mapTabExhibition" style="padding: 6px 14px; cursor: pointer;">Exhibition Hall</button>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; width: 100%; text-align: center; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);">
+            <img src="${activeImg}" alt="Convention Map" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          </div>
+        </div>
+      `;
+
+      container.querySelector("#mapTabDefault").onclick = () => {
+        state.activeMap = "default";
+        render();
+      };
+      container.querySelector("#mapTabExhibition").onclick = () => {
+        state.activeMap = "exhibition";
+        render();
+      };
+      return;
+    }
 
     // If we are in "MY" calendar mode, render the Google Calendar-style daily time grid with side-by-side collisions
     if (state.mode === "MY") {
@@ -3308,6 +3394,14 @@ function render() {
     state.mode = "MY";
     document.getElementById("modeMyBtn").classList.add("active");
     document.getElementById("modeBrowseBtn").classList.remove("active");
+    render();
+  });
+  
+  document.getElementById("modeMapBtn").addEventListener("click", () => {
+    state.mode = "MAP";
+    document.getElementById("modeMapBtn").classList.add("active");
+    document.getElementById("modeBrowseBtn").classList.remove("active");
+    document.getElementById("modeMyBtn").classList.remove("active");
     render();
   });
 
