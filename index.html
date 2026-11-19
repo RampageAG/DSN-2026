@@ -6,7 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DSN26 Schedule" />
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0f172a" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
   <title>Dragonsteel Nexus 2026 — Event Schedule</title>
   <style>
     :root {
@@ -870,7 +872,7 @@
     "Day": "2026-12-03",
     "Start Time": "10:00 AM",
     "End Time": "11:15 AM",
-    "Featured Guests": "Krishna Patel, Paul Reynard, Michael Bahnmiller",
+    "Featured Guests": "Krishna Patel, Paul Reynard, Chance Thomas, Michael Bahnmiller",
     "Location": "Roshar (Main Stage)",
     "Description": "Sometimes the only difference between humor and tragedy is the score. Music fundamentally changes how we experience a story. It makes victory feel triumphant, and makes quiet moments bring us to tears. But what goes into creating that emotional connection?",
     "Tags": "Silverlight University"
@@ -976,6 +978,16 @@
     "Tags": "Cozy Fantasy, Writing"
   },
   {
+    "Name": "Story Time with the Cosmere Librarians",
+    "Day": "2026-12-03",
+    "Start Time": "11:30 AM",
+    "End Time": "12:30 PM",
+    "Featured Guests": "",
+    "Location": "Plaza",
+    "Description": "Snuggle up for story time with the cosmere's favorite librarians.",
+    "Tags": ""
+  },
+  {
     "Name": "The Psychology & Ethics of the Villain: Taravangian",
     "Day": "2026-12-03",
     "Start Time": "11:30 AM",
@@ -1056,13 +1068,23 @@
     "Tags": "Gaming"
   },
   {
-    "Name": "Cosplay Meetup: Skyward Flight Crew",
+    "Name": "Order of the Silver Rose",
+    "Day": "2026-12-03",
+    "Start Time": "12:00 PM",
+    "End Time": "1:00 PM",
+    "Featured Guests": "",
+    "Location": "Dueling Arena (Hall 1)",
+    "Description": "Knights in shinning armor!! Need I say more?",
+    "Tags": "Fantasy"
+  },
+  {
+    "Name": "Cosplay Meetup: Parchendi & Shardbearers",
     "Day": "2026-12-03",
     "Start Time": "12:30 PM",
     "End Time": "1:30 PM",
     "Featured Guests": "",
     "Location": "Plaza",
-    "Description": "Calling all flight crew!!! Come travel the stars and meetup with other Skyward cosplayers",
+    "Description": "Battle of the meetups!!",
     "Tags": "Craft"
   },
   {
@@ -1266,7 +1288,7 @@
     "Tags": "Writing"
   },
   {
-    "Name": "The Healing Power of Play: How RPG's Help with  Mental Health",
+    "Name": "The Healing Power of Play: How RPG's Help with Mental Health",
     "Day": "2026-12-03",
     "Start Time": "2:30 PM",
     "End Time": "3:45 PM",
@@ -1324,16 +1346,6 @@
     "Location": "Game Room (Room 155)",
     "Description": "",
     "Tags": "Gaming"
-  },
-  {
-    "Name": "Cosplay Meetup: Carl & Princess Donut",
-    "Day": "2026-12-03",
-    "Start Time": "3:30 PM",
-    "End Time": "4:30 PM",
-    "Featured Guests": "",
-    "Location": "Plaza",
-    "Description": "Calling all crawlers! This meetup is for all our DCC cosplay. YAY!!",
-    "Tags": "Art, Craft"
   },
   {
     "Name": "Welcome Ceremony",
@@ -1420,7 +1432,7 @@
     "Day": "2026-12-03",
     "Start Time": "4:30 PM",
     "End Time": "5:45 PM",
-    "Featured Guests": "Martha Wells, Holly Black, Christopher Paolini, Megan Lloyd",
+    "Featured Guests": "Martha Wells, Holly Black, Christopher Paolini, Dan Wells, Megan Lloyd",
     "Location": "Scadrial (Grand Ballroom)",
     "Description": "Join these legends of literacy as they talk about the process of transforming our favorite books into film.",
     "Tags": "Writing, Featured Guest"
@@ -3343,6 +3355,7 @@
     "The Library (Room 251)": "assets/thelibrary.png",
 	"Plaza": "assets/plaza.png",
 	"Art Gallery (Room 150)": "assets/artgallery.png",
+	"Dueling Arena (Hall 1)": "assets/arena.png",
     "default": "assets/dsn2026map.png"
   };
 
@@ -3908,6 +3921,13 @@
   });
 
   document.getElementById("exportIcsBtn").addEventListener("click", exportToIcs);
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js")
+        .catch(err => console.error("Service worker registration failed:", err));
+    });
+  }
 
   // Init
   populateFilters();

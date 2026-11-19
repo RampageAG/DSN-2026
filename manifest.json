@@ -1,0 +1,23 @@
+{
+  "name": "Dragonsteel Nexus 2026 Planner",
+  "short_name": "DSN 2026",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#DA0000",
+  "theme_color": "#DA0000",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
