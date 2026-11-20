@@ -1,4 +1,4 @@
-const CACHE_NAME = "dsn2026-planner-v1.0";
+const CACHE_NAME = "dsn2026-planner-v1.0.1";
 
 const PRECACHE_URLS = [
   "/",
